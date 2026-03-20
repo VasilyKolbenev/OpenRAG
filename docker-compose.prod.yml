@@ -1,7 +1,7 @@
 version: "3.9"
 
 # ─────────────────────────────────────────────────────
-# 🐍 SERPENT RAG — Production Docker Compose
+# OpenRAG — Production Docker Compose
 # Agentic RAG · Graph RAG · Hybrid RAG · Simple RAG
 # ─────────────────────────────────────────────────────
 
@@ -22,7 +22,7 @@ services:
   # ── API Gateway (Traefik) ──────────────────────────
   traefik:
     image: traefik:v3.1
-    container_name: serpent-gateway
+    container_name: openrag-gateway
     <<: *common
     read_only: false
     command:
@@ -34,9 +34,9 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--certificatesresolvers.serpent.acme.tlschallenge=true"
-      - "--certificatesresolvers.serpent.acme.email=${ACME_EMAIL:-admin@example.com}"
-      - "--certificatesresolvers.serpent.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.openrag.acme.tlschallenge=true"
+      - "--certificatesresolvers.openrag.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.openrag.acme.storage=/letsencrypt/acme.json"
       - "--accesslog=true"
       - "--accesslog.filepath=/var/log/traefik/access.log"
       - "--metrics.prometheus=true"
@@ -50,8 +50,8 @@ services:
       - traefik-certs:/letsencrypt
       - traefik-logs:/var/log/traefik
     networks:
-      - serpent-public
-      - serpent-internal
+      - openrag-public
+      - openrag-internal
     healthcheck:
       test: ["CMD", "traefik", "healthcheck"]
       interval: 30s
@@ -70,14 +70,14 @@ services:
       dockerfile: Dockerfile
       args:
         - NODE_ENV=production
-    container_name: serpent-frontend
+    container_name: openrag-frontend
     <<: *common
     read_only: false
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=serpent"
+      - "traefik.http.routers.frontend.tls.certresolver=openrag"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
       - "traefik.http.middlewares.frontend-headers.headers.stsSeconds=31536000"
       - "traefik.http.middlewares.frontend-headers.headers.contentTypeNosniff=true"
@@ -88,8 +88,8 @@ services:
       - "traefik.http.middlewares.rate-limit.ratelimit.burst=50"
     # B14: No direct port exposure — traffic flows through Traefik only
     networks:
-      - serpent-public
-      - serpent-internal
+      - openrag-public
+      - openrag-internal
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:3000 || exit 1"]
       interval: 30s
@@ -104,13 +104,13 @@ services:
   # ── Backend API (FastAPI) ──────────────────────────
   api:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: serpent-api
+    container_name: openrag-api
     <<: *common
     read_only: false
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-serpent}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-serpent}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openrag}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-openrag}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - QDRANT_URL=http://qdrant:6333
       - NEO4J_URI=bolt://neo4j:7687
@@ -127,7 +127,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=serpent"
+      - "traefik.http.routers.api.tls.certresolver=openrag"
       - "traefik.http.services.api.loadbalancer.server.port=8000"
       - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
       - "traefik.http.middlewares.api-ratelimit.ratelimit.average=50"
@@ -144,8 +144,8 @@ services:
       - upload-data:/app/uploads
       - model-cache:/app/models
     networks:
-      - serpent-public
-      - serpent-internal
+      - openrag-public
+      - openrag-internal
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -160,14 +160,14 @@ services:
   # ── RAG Worker (Celery) ────────────────────────────
   worker:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: serpent-worker
+    container_name: openrag-worker
     <<: *common
     read_only: false
-    command: celery -A app.workers.celery_app:celery_app worker -l info -c 4 -Q ingest,evaluate
+    command: celery -A openrag.workers.celery_app:celery_app worker -l info -c 4 -Q ingest,evaluate
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-serpent}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-serpent}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openrag}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-openrag}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - QDRANT_URL=http://qdrant:6333
       - NEO4J_URI=bolt://neo4j:7687
@@ -193,7 +193,7 @@ services:
       - upload-data:/app/uploads
       - model-cache:/app/models
     networks:
-      - serpent-internal
+      - openrag-internal
     deploy:
       resources:
         limits:
@@ -203,20 +203,20 @@ services:
   # ── PostgreSQL ─────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: serpent-postgres
+    container_name: openrag-postgres
     <<: *common
     read_only: false
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-serpent}
+      POSTGRES_USER: ${POSTGRES_USER:-openrag}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-serpent}
+      POSTGRES_DB: ${POSTGRES_DB:-openrag}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - serpent-internal
+      - openrag-internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-serpent}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-openrag}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -229,7 +229,7 @@ services:
   # ── Redis ──────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: serpent-redis
+    container_name: openrag-redis
     <<: *common
     read_only: false
     command: >
@@ -242,7 +242,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - serpent-internal
+      - openrag-internal
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -257,7 +257,7 @@ services:
   # ── Qdrant (Vector Store) ──────────────────────────
   qdrant:
     image: qdrant/qdrant:v1.11.0
-    container_name: serpent-qdrant
+    container_name: openrag-qdrant
     <<: *common
     read_only: false
     environment:
@@ -265,7 +265,7 @@ services:
     volumes:
       - qdrant-data:/qdrant/storage
     networks:
-      - serpent-internal
+      - openrag-internal
     healthcheck:
       test: ["CMD-SHELL", "bash -c ':> /dev/tcp/localhost/6333' || exit 1"]
       interval: 15s
@@ -280,7 +280,7 @@ services:
   # ── Neo4j (Graph Store) ────────────────────────────
   neo4j:
     image: neo4j:5.22-community
-    container_name: serpent-neo4j
+    container_name: openrag-neo4j
     <<: *common
     read_only: false
     environment:
@@ -291,7 +291,7 @@ services:
     volumes:
       - neo4j-data:/data
     networks:
-      - serpent-internal
+      - openrag-internal
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:7474 || exit 1"]
       interval: 15s
@@ -306,13 +306,13 @@ services:
   # ── OpenTelemetry Collector ────────────────────────
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.104.0
-    container_name: serpent-otel
+    container_name: openrag-otel
     <<: *common
     read_only: false
     volumes:
       - ./infra/otel/config.yaml:/etc/otelcol/config.yaml:ro
     networks:
-      - serpent-internal
+      - openrag-internal
     deploy:
       resources:
         limits:
@@ -322,14 +322,14 @@ services:
   # ── Prometheus ─────────────────────────────────────
   prometheus:
     image: prom/prometheus:v2.53.0
-    container_name: serpent-prometheus
+    container_name: openrag-prometheus
     <<: *common
     read_only: false
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     networks:
-      - serpent-internal
+      - openrag-internal
     deploy:
       resources:
         limits:
@@ -339,7 +339,7 @@ services:
   # ── Grafana ────────────────────────────────────────
   grafana:
     image: grafana/grafana:11.1.0
-    container_name: serpent-grafana
+    container_name: openrag-grafana
     <<: *common
     read_only: false
     environment:
@@ -353,11 +353,11 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.grafana.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/grafana`)"
       - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.routers.grafana.tls.certresolver=serpent"
+      - "traefik.http.routers.grafana.tls.certresolver=openrag"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     networks:
-      - serpent-public
-      - serpent-internal
+      - openrag-public
+      - openrag-internal
     deploy:
       resources:
         limits:
@@ -377,8 +377,8 @@ volumes:
   grafana-data:
 
 networks:
-  serpent-public:
+  openrag-public:
     driver: bridge
-  serpent-internal:
+  openrag-internal:
     driver: bridge
     internal: true

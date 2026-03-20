@@ -1,4 +1,4 @@
-# SerpentRAG Commercialization Roadmap
+# OpenRAG Commercialization Roadmap
 
 ## Business Model
 
@@ -22,7 +22,7 @@
 ## Phase 2: Landing Pages (Week 3-4)
 
 **International:**
-- [ ] Domain: serpentrag.io (English)
+- [ ] Domain: openrag.io (English)
 - [ ] Hero section with architecture diagram
 - [ ] Feature comparison vs LangChain / LlamaIndex / Haystack
 - [ ] Self-hosted vs SaaS pricing toggle
@@ -30,7 +30,7 @@
 - [ ] Blog: "6 RAG Strategies Compared" (SEO)
 
 **RU/CIS:**
-- [ ] Domain: serpentrag.ru (Russian)
+- [ ] Domain: openrag.ru (Russian)
 - [ ] 152-FZ compliance messaging (data stays on your servers)
 - [ ] Government / enterprise focus (on-premise)
 - [ ] Integration with Russian payment systems

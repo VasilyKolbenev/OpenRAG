@@ -1,4 +1,4 @@
--- Serpent RAG — PostgreSQL initialization
+-- OpenRAG — PostgreSQL initialization
 -- Enables pgvector extension for vector embeddings
 
 CREATE EXTENSION IF NOT EXISTS vector;

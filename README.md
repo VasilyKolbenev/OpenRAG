@@ -1,200 +1,188 @@
-# SerpentRAG
+<p align="center">
+  <h1 align="center">OpenRAG</h1>
+  <p align="center"><strong>Open-source RAG platform with 5-primitive architecture</strong></p>
+</p>
 
-**Universal self-hosted RAG platform with 6 retrieval strategies**
-
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![React](https://img.shields.io/badge/react-18-61dafb)
-![License](https://img.shields.io/badge/license-BSL--1.1-orange)
-![Coverage](https://img.shields.io/badge/coverage-80%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-175%20passed-brightgreen)
-![Security](https://img.shields.io/badge/security-hardened-green)
-![Docker](https://img.shields.io/badge/docker-compose-2496ED)
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-blue" alt="Python">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License">
+  <img src="https://img.shields.io/badge/strategies-6-orange" alt="Strategies">
+  <img src="https://img.shields.io/badge/MCP-enabled-blueviolet" alt="MCP">
+  <img src="https://img.shields.io/badge/docker-compose-2496ED" alt="Docker">
+</p>
 
 ---
 
-## What is SerpentRAG?
+## Architecture
 
-SerpentRAG is a production-ready RAG (Retrieval Augmented Generation) platform that lets you query your documents using 6 different retrieval strategies. Deploy on your own infrastructure, keep your data private, use any LLM provider.
+```
+                    ┌─────────────────────────────────┐
+                    │          Applications            │
+                    │   CLI  /  Web UI  /  MCP Client  │
+                    └───────────────┬──────────────────┘
+                                    │
+                    ┌───────────────▼──────────────────┐
+                    │         API  Gateway              │
+                    │   FastAPI  +  Auth  +  Tracing    │
+                    └───────────────┬──────────────────┘
+                                    │
+          ┌─────────┬───────────┬───┴───┬───────────┬─────────┐
+          ▼         ▼           ▼       ▼           ▼         ▼
+     ┌─────────┐ ┌──────┐ ┌────────┐ ┌──────┐ ┌────────┐ ┌──────┐
+     │ Ingest  │ │Store │ │Retrieve│ │Reason│ │Generate│ │Eval  │
+     │(parse,  │ │(vec, │ │(search,│ │(route│ │(LLM +  │ │(RAGAS│
+     │ chunk,  │ │graph,│ │ rank,  │ │plan, │ │stream) │ │trace)│
+     │ embed)  │ │ SQL) │ │filter) │ │judge)│ │        │ │      │
+     └─────────┘ └──────┘ └────────┘ └──────┘ └────────┘ └──────┘
+       Primitive    Primitive  Primitive  Primitive  Primitive
+          1            2          3          4          5
+```
 
-### Key Features
+Every RAG strategy is a composition of these 5 primitives. Add a new strategy by wiring them differently.
 
-- **RAG Debugger** — Full pipeline trace visualization (see exactly what happened at each step)
-- **A/B Compare** — Run the same query through multiple strategies side-by-side
-- **Graph Explorer** — Interactive Neo4j knowledge graph visualization
-- **Quality Dashboard** — RAGAS metrics (context relevance, faithfulness, answer relevance)
-- **AI Advisor** — Chatbot that recommends the best strategy for your use case
-- **SSE Streaming** — Real-time token-by-token response streaming
+## Features
+
+- **6 RAG strategies** -- Naive, Hybrid, Graph, Agentic, MemoRAG, Corrective RAG
+- **Pipeline tracing** -- Full step-by-step trace for every query (RAG Debugger)
+- **A/B Compare** -- Run the same query through multiple strategies side-by-side
+- **Graph Explorer** -- Interactive Neo4j knowledge graph visualization
+- **MCP integration** -- Use OpenRAG as a tool from Claude Desktop or any MCP client
+- **CLI** -- `openrag query`, `openrag compare`, `openrag upload` and more
+- **SSE streaming** -- Real-time token-by-token response streaming
+- **Quality dashboard** -- RAGAS metrics (context relevance, faithfulness, answer relevance)
+- **AI Advisor** -- Chatbot that recommends the best strategy for your use case
+- **Multi-tenancy** -- Opt-in tenant isolation via JWT claims
 
 ## RAG Strategies
 
 | Strategy | ID | Best For | Latency | Accuracy |
 |----------|-----|----------|---------|----------|
-| **Simple RAG** | `naive` | FAQ, single-doc Q&A, prototyping | Low | Medium |
-| **Hybrid RAG** | `hybrid` | Enterprise search, general-purpose | Low-Medium | High |
-| **Graph RAG** | `graph` | Entity-rich domains (legal, medical, biotech) | Medium | High |
-| **Agentic RAG** | `agentic` | Complex research, multi-hop reasoning | Medium-High | Very High |
-| **MemoRAG** | `memo` | Large collections, recurring query patterns | Medium | High |
-| **Corrective RAG** | `corrective` | High-stakes queries, source validation | Medium | High |
-
-## Architecture
-
-```
-                         ┌─────────────────┐
-                         │   User Browser   │
-                         └────────┬─────────┘
-                                  │ HTTPS
-                    ┌─────────────▼──────────────┐
-                    │   Frontend (React + Nginx)  │
-                    │        :3000                │
-                    └─────────────┬───────────────┘
-                                  │ /api/*
-                    ┌─────────────▼───────────────┐
-                    │   API Server (FastAPI)       │
-                    │   6 RAG Strategies + SSE     │
-                    │        :8000                 │
-                    └──┬──────┬──────┬──────┬─────┘
-                       │      │      │      │
-              ┌────────▼┐ ┌──▼───┐ ┌▼─────┐ ┌▼──────┐
-              │PostgreSQL│ │Redis │ │Qdrant│ │ Neo4j │
-              │ pgvector │ │Cache │ │Vector│ │ Graph │
-              │  :5432   │ │:6379 │ │:6333 │ │ :7687 │
-              └──────────┘ └──┬───┘ └──────┘ └───────┘
-                              │
-                    ┌─────────▼───────────────┐
-                    │   Celery Worker          │
-                    │   Document Processing    │
-                    └─────────────────────────┘
-```
-
-> C4 architecture diagrams (PlantUML): [`docs/architecture/`](docs/architecture/)
+| Simple RAG | `naive` | FAQ, single-doc Q&A, prototyping | Low | Medium |
+| Hybrid RAG | `hybrid` | Enterprise search, general-purpose | Low-Med | High |
+| Graph RAG | `graph` | Entity-rich domains (legal, medical) | Medium | High |
+| Agentic RAG | `agentic` | Multi-hop reasoning, complex research | Med-High | Very High |
+| MemoRAG | `memo` | Large collections, recurring patterns | Medium | High |
+| Corrective RAG | `corrective` | High-stakes, source validation | Medium | High |
 
 ## Quick Start
 
 ```bash
-# 1. Clone
-git clone https://github.com/VasilyKolbenev/SerpentRAG.git
-cd SerpentRAG
+# 1. Install CLI
+pip install openrag
 
-# 2. Configure
-cp .env.example .env
-# Edit .env: add your OPENAI_API_KEY and/or ANTHROPIC_API_KEY
+# 2. Initialize (interactive wizard — picks LLM provider, creates .env)
+openrag init
 
-# 3. Launch
-docker compose up -d
-
-# 4. Verify
-curl http://localhost:8000/health
-# Open http://localhost:3000 in browser
+# 3. Launch all services
+openrag up
 ```
 
-**Requirements:** Docker Engine 24+ with Docker Compose v2
+Open **http://localhost:3000** in your browser. API available at **http://localhost:8000**.
 
-## Tech Stack
+Requirements: Python 3.12+, Docker Engine 24+ with Compose v2.
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18, TypeScript, Tailwind CSS, Zustand, Vite |
-| **Backend** | FastAPI, Uvicorn, Python 3.12, Pydantic v2 |
-| **LLM** | LiteLLM (OpenAI, Anthropic, Ollama) |
-| **Embeddings** | sentence-transformers (all-MiniLM-L6-v2, 384-dim, local) |
-| **Vector Store** | Qdrant v1.11 |
-| **Graph Store** | Neo4j 5.22 Community (optional) |
-| **Database** | PostgreSQL 16 + pgvector |
-| **Cache/Queue** | Redis 7 + Celery 5.4 |
-| **Observability** | structlog, OpenTelemetry, Prometheus, Grafana |
-| **Infrastructure** | Docker Compose, Traefik (production), Alembic migrations |
+## CLI Usage
 
-## Project Structure
+```bash
+# Query with a specific strategy
+openrag query "What is retrieval augmented generation?" -s hybrid
 
-```
-serpent-rag-platform/
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/          # 9 API routers
-│   │   ├── services/        # 8 core services
-│   │   ├── strategies/      # 6 RAG strategies + factory
-│   │   ├── models/          # SQLAlchemy models
-│   │   ├── schemas/         # Pydantic schemas
-│   │   ├── middleware/       # Logging, telemetry, tenant
-│   │   ├── workers/         # Celery tasks
-│   │   ├── main.py          # App factory
-│   │   └── config.py        # Settings (pydantic-settings)
-│   ├── tests/               # 175 tests, 80%+ coverage
-│   ├── alembic/             # Database migrations
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # 25+ React components
-│   │   ├── pages/           # 6 pages
-│   │   ├── stores/          # Zustand stores
-│   │   ├── hooks/           # SSE streaming hook
-│   │   └── lib/             # API client, utils
-│   ├── package.json
-│   └── Dockerfile
-├── infra/                   # Prometheus, Grafana, OTel configs
-├── docs/
-│   ├── architecture/        # C4 PlantUML diagrams
-│   ├── API.md               # API reference
-│   └── ROADMAP.md           # Commercialization roadmap
-├── docker-compose.yml       # Development (7 services)
-├── docker-compose.prod.yml  # Production (+ Traefik, monitoring)
-└── .env.example             # Environment template
+# A/B compare two strategies
+openrag compare "Explain vector search" -s naive -s hybrid
+
+# Upload documents
+openrag upload ./docs/
+
+# Check service health
+openrag status
+
+# List available strategies
+openrag strategies
+
+# View a pipeline trace
+openrag traces abc-123-def
+
+# Manage API keys
+openrag apikey-create --name dev
+openrag apikey-list
+openrag apikey-revoke <id>
+
+# Start MCP server (for Claude Desktop)
+openrag mcp
 ```
 
-## API Endpoints
+Full CLI reference: [docs/CLI.md](docs/CLI.md)
+
+## MCP Integration
+
+Use OpenRAG as a tool from Claude Desktop or any MCP-compatible client.
+
+Add to your Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "openrag": {
+      "command": "openrag",
+      "args": ["mcp"],
+      "env": {
+        "OPENRAG_API_URL": "http://localhost:8000",
+        "OPENRAG_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+Available tools: `openrag_query`, `openrag_upload`, `openrag_strategies`, `openrag_compare`, `openrag_collections`, `openrag_status`.
+
+Full MCP reference: [docs/MCP.md](docs/MCP.md)
+
+## API Overview
 
 | Group | Endpoint | Description |
 |-------|----------|-------------|
 | Health | `GET /health` | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
 | Query | `POST /query` | RAG query with selected strategy |
-| Streaming | `POST /query/stream` | SSE streaming response |
+| Stream | `POST /query/stream` | SSE streaming response |
 | Compare | `POST /compare` | A/B test multiple strategies |
 | Documents | `POST /documents/upload` | Upload PDF, DOCX, TXT, MD |
-| Collections | `GET /collections` | Manage vector collections |
+| Collections | `CRUD /collections` | Manage vector collections |
 | Strategies | `GET /strategies` | List available strategies |
 | Traces | `GET /traces/{id}` | Pipeline trace (RAG Debugger) |
-| Graph | `GET /graph/explore` | Knowledge graph data |
+| Graph | `GET /graph/explore` | Knowledge graph visualization |
 | Metrics | `GET /metrics/quality` | RAGAS quality metrics |
+| Engine | `GET /engine/models` | Available LLM models |
+| Feedback | `POST /feedback` | Submit query feedback |
+| Analytics | `GET /analytics` | Usage analytics |
 | Advisor | `POST /advisor/chat` | AI strategy recommendation |
 
-Full API reference: [`docs/API.md`](docs/API.md)
+Full API reference: [docs/API.md](docs/API.md)
 
-## Development
+## Tech Stack
 
-```bash
-# Backend
-cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-pytest tests/ -v --cov=app
+| Layer | Technology |
+|-------|-----------|
+| **API** | FastAPI, Uvicorn, Python 3.12, Pydantic v2 |
+| **LLM** | LiteLLM (OpenAI, Anthropic, Ollama) |
+| **Embeddings** | sentence-transformers (all-MiniLM-L6-v2, 384-dim, local) |
+| **Vector Store** | Qdrant |
+| **Graph Store** | Neo4j Community (optional, graceful degradation) |
+| **Database** | PostgreSQL 16 + pgvector |
+| **Cache / Queue** | Redis 7, Celery 5.4 |
+| **Frontend** | React 18, TypeScript, Tailwind CSS, Zustand, Vite |
+| **Observability** | structlog, OpenTelemetry, Prometheus, Grafana |
+| **Infrastructure** | Docker Compose, Traefik, Alembic |
+| **Integration** | MCP (Model Context Protocol), CLI |
 
-# Frontend
-cd frontend
-npm ci
-npm run dev
-```
+## Documentation
 
-## Security
-
-SerpentRAG is built with security as a first-class concern. 11 security layers are implemented out of the box:
-
-- **Authentication:** JWT with expiration, unique token IDs, role claims
-- **Encryption in transit:** TLS 1.2+ via Traefik + Let's Encrypt
-- **Container hardening:** non-root users, read-only filesystem, no-new-privileges
-- **DevSecOps CI/CD:** Bandit, Semgrep, Gitleaks, Trivy, pip-audit, SBOM generation
-- **Input validation:** Pydantic v2 schemas with strict bounds, file upload whitelist
-- **Network isolation:** internal/public Docker network separation
-- **Security headers:** CSP, HSTS, X-Frame-Options, Permissions-Policy
-
-See [SECURITY.md](SECURITY.md) for full security policy, vulnerability reporting, and compliance roadmap.
+- [Architecture](docs/ARCHITECTURE.md) -- 5-primitive design, data flow, extension guide
+- [API Reference](docs/API.md) -- All endpoints with request/response examples
+- [CLI Reference](docs/CLI.md) -- All commands with usage examples
+- [MCP Integration](docs/MCP.md) -- MCP tools, resources, and configuration
+- [Deployment](docs/DEPLOYMENT.md) -- Docker Compose, production, SSL, backups
 
 ## License
 
-**Business Source License 1.1 (BSL)**
-
-- Source code is available for reading, modification, and non-production use
-- Production use requires a commercial license
-- Converts to Apache 2.0 on 2030-02-20
-
-See [LICENSE](LICENSE) for details. For commercial licensing: serpentrag@proton.me
+Apache License 2.0. See [LICENSE](LICENSE) for details.

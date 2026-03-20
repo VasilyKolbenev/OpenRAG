@@ -25,7 +25,7 @@ const WELCOME_MESSAGE = (strategy: RAGStrategy): ChatMessage => ({
   id: 'welcome',
   role: 'assistant',
   content:
-    'Welcome to Serpent RAG \u{1F40D} \u2014 I\'m ready to process your queries using the selected retrieval strategy. Upload documents and ask me anything.',
+    'Welcome to OpenRAG \u2014 I\'m ready to process your queries using the selected retrieval strategy. Upload documents and ask me anything.',
   strategy,
   timestamp: Date.now(),
 });

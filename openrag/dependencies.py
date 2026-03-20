@@ -2,6 +2,7 @@
 FastAPI dependencies — auth, services, database sessions.
 """
 
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -45,6 +46,23 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Token expired")
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail="Invalid token")
+
+
+async def get_api_key_or_jwt(
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None),
+) -> Optional[dict]:
+    """Check X-API-Key first, then fall back to JWT. Returns None in dev mode."""
+    if x_api_key:
+        hashed = hashlib.sha256(x_api_key.encode()).hexdigest()
+        if settings.api_key_master and hashed == hashlib.sha256(settings.api_key_master.encode()).hexdigest():
+            return {"sub": "api_key", "type": "api_key"}
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    if authorization:
+        return await get_current_user(authorization)
+    if not settings.is_production:
+        return None
+    raise HTTPException(status_code=401, detail="Authentication required")
 
 
 async def get_current_user(

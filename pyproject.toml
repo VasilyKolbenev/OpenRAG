@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openrag"
+version = "1.0.0"
+description = "Open-source RAG platform with 5-primitive architecture"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.12"
+
+[project.scripts]
+openrag = "openrag.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["openrag*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.coverage.run]
+source = ["openrag"]
+omit = [
+    "openrag/workers/*",
+    "openrag/middleware/telemetry.py",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true

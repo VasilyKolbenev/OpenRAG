@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────
-# SERPENT RAG PLATFORM — Frontend Dockerfile
+# OpenRAG Platform — Frontend Dockerfile
 # Multi-stage build with Nginx serving
 # ─────────────────────────────────────────────
 

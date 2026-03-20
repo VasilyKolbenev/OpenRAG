@@ -13,7 +13,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(http_requests_total{service=\"serpent-api\"}[5m])",
+          "expr": "rate(http_requests_total{service=\"openrag-api\"}[5m])",
           "legendFormat": "{{method}} {{handler}}"
         }
       ],
@@ -36,15 +36,15 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{service=\"serpent-api\"}[5m]))",
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{service=\"openrag-api\"}[5m]))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service=\"serpent-api\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service=\"openrag-api\"}[5m]))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service=\"serpent-api\"}[5m]))",
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service=\"openrag-api\"}[5m]))",
           "legendFormat": "p99"
         }
       ],
@@ -67,7 +67,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "sum by (status) (increase(http_requests_total{service=\"serpent-api\"}[1h]))",
+          "expr": "sum by (status) (increase(http_requests_total{service=\"openrag-api\"}[1h]))",
           "legendFormat": "{{status}}"
         }
       ],
@@ -105,7 +105,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "100 * sum(rate(http_requests_total{status=~\"5..\", service=\"serpent-api\"}[5m])) / sum(rate(http_requests_total{service=\"serpent-api\"}[5m]))",
+          "expr": "100 * sum(rate(http_requests_total{status=~\"5..\", service=\"openrag-api\"}[5m])) / sum(rate(http_requests_total{service=\"openrag-api\"}[5m]))",
           "legendFormat": "error %"
         }
       ],
@@ -130,7 +130,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "sum(http_requests_in_progress{service=\"serpent-api\"})",
+          "expr": "sum(http_requests_in_progress{service=\"openrag-api\"})",
           "legendFormat": "in-flight"
         }
       ],
@@ -154,7 +154,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "avg(rate(http_request_duration_seconds_sum{service=\"serpent-api\", handler=\"/query\"}[5m]) / rate(http_request_duration_seconds_count{service=\"serpent-api\", handler=\"/query\"}[5m]))",
+          "expr": "avg(rate(http_request_duration_seconds_sum{service=\"openrag-api\", handler=\"/query\"}[5m]) / rate(http_request_duration_seconds_count{service=\"openrag-api\", handler=\"/query\"}[5m]))",
           "legendFormat": "/query avg"
         }
       ],
@@ -179,7 +179,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "time() - process_start_time_seconds{service=\"serpent-api\"}",
+          "expr": "time() - process_start_time_seconds{service=\"openrag-api\"}",
           "legendFormat": "uptime"
         }
       ],
@@ -193,7 +193,7 @@
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["serpent-rag", "monitoring"],
+  "tags": ["openrag", "monitoring"],
   "templating": {
     "list": [
       {
@@ -207,7 +207,7 @@
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Serpent RAG — Overview",
-  "uid": "serpent-rag-overview",
+  "title": "OpenRAG — Overview",
+  "uid": "openrag-overview",
   "version": 1
 }

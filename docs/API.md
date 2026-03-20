@@ -1,33 +1,62 @@
-# SerpentRAG API Reference
+# OpenRAG API Reference
 
 Base URL: `http://localhost:8000`
 
-Interactive docs (development only): `http://localhost:8000/docs`
+Interactive docs (Swagger UI): `http://localhost:8000/docs`
 
 ## Authentication
 
-All endpoints except `/health` require a JWT bearer token:
+All endpoints except `/health` require an API key:
 
 ```
-Authorization: Bearer <token>
+X-API-Key: your-api-key
+```
+
+Generate keys with:
+
+```bash
+openrag apikey-create --name dev
+```
+
+JWT authentication is available as an opt-in fallback:
+
+```
+Authorization: Bearer <jwt-token>
 ```
 
 ## Endpoints
 
 ### Health
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Service health check (PostgreSQL, Redis, Qdrant, Neo4j status) |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/health` | No | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "services": {
+    "postgres": "healthy",
+    "redis": "healthy",
+    "qdrant": "healthy",
+    "neo4j": "degraded"
+  }
+}
+```
 
 ### Query
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/query` | Execute RAG query with selected strategy |
-| POST | `/query/stream` | SSE streaming RAG query (real-time token output) |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/query` | Yes | Execute RAG query with selected strategy |
+| POST | `/query/stream` | Yes | SSE streaming RAG query |
 
-**POST /query** request body:
+**POST /query**
+
+Request:
+
 ```json
 {
   "query": "What is retrieval augmented generation?",
@@ -40,7 +69,25 @@ Authorization: Bearer <token>
 }
 ```
 
-**POST /query/stream** — Same body, returns `text/event-stream` (SSE):
+Response:
+
+```json
+{
+  "answer": "Retrieval augmented generation is...",
+  "sources": [
+    {"chunk_id": "abc-123", "text": "...", "score": 0.92, "metadata": {}}
+  ],
+  "trace_id": "trace-456",
+  "strategy": "hybrid",
+  "model": "gpt-4o",
+  "latency_ms": 1250
+}
+```
+
+**POST /query/stream**
+
+Same request body. Returns `text/event-stream` (SSE):
+
 ```
 data: {"token": "Retrieval"}
 data: {"token": " augmented"}
@@ -50,11 +97,12 @@ data: {"done": true, "sources": [...], "trace_id": "abc-123"}
 
 ### Compare (A/B Testing)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/compare` | Run query through multiple strategies simultaneously |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/compare` | Yes | Run query through multiple strategies |
 
-**Request body:**
+Request:
+
 ```json
 {
   "query": "Explain vector search",
@@ -63,56 +111,135 @@ data: {"done": true, "sources": [...], "trace_id": "abc-123"}
 }
 ```
 
+Response:
+
+```json
+{
+  "results": [
+    {"strategy": "naive", "answer": "...", "sources": [...], "latency_ms": 800},
+    {"strategy": "hybrid", "answer": "...", "sources": [...], "latency_ms": 1100},
+    {"strategy": "graph", "answer": "...", "sources": [...], "latency_ms": 1400}
+  ]
+}
+```
+
 ### Documents
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/documents/upload` | Upload document for processing (PDF, DOCX, TXT, MD) |
-| GET | `/documents` | List all documents |
-| GET | `/documents/{id}` | Get document details |
-| DELETE | `/documents/{id}` | Delete document and its chunks |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/documents/upload` | Yes | Upload document (PDF, DOCX, TXT, MD, CSV) |
+| GET | `/documents` | Yes | List all documents |
+| GET | `/documents/{id}` | Yes | Get document details |
+| DELETE | `/documents/{id}` | Yes | Delete document and its chunks |
+
+**POST /documents/upload**
+
+Multipart form upload:
+
+```bash
+curl -X POST http://localhost:8000/documents/upload \
+  -H "X-API-Key: your-key" \
+  -F "file=@report.pdf" \
+  -F "collection=research"
+```
+
+Response:
+
+```json
+{
+  "document_id": "doc-789",
+  "filename": "report.pdf",
+  "status": "processing",
+  "collection": "research",
+  "task_id": "celery-task-abc"
+}
+```
 
 ### Collections
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/collections` | List all vector collections |
-| POST | `/collections` | Create new collection |
-| DELETE | `/collections/{name}` | Delete collection |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/collections` | Yes | List all vector collections |
+| POST | `/collections` | Yes | Create new collection |
+| DELETE | `/collections/{name}` | Yes | Delete collection |
 
 ### Strategies
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/strategies` | List available RAG strategies with metadata |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/strategies` | Yes | List available RAG strategies with metadata |
+
+Response:
+
+```json
+[
+  {
+    "id": "naive",
+    "name": "Simple RAG",
+    "description": "Basic vector similarity search",
+    "latency": "low",
+    "accuracy": "medium"
+  }
+]
+```
 
 ### Pipeline Traces (RAG Debugger)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/traces/{trace_id}` | Get full pipeline trace for debugging |
-| GET | `/traces` | List recent traces |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/traces/{trace_id}` | Yes | Get full pipeline trace |
+| GET | `/traces` | Yes | List recent traces |
 
 ### Graph Explorer
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/graph/explore` | Get entity-relationship graph data for visualization |
-| GET | `/graph/entities` | Search entities in knowledge graph |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/graph/explore` | Yes | Get entity-relationship graph data |
+| GET | `/graph/entities` | Yes | Search entities in knowledge graph |
 
 ### Quality Metrics
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/metrics/quality` | RAGAS evaluation metrics (context relevance, faithfulness, answer relevance) |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/metrics/quality` | Yes | RAGAS evaluation metrics |
+
+### Engine
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/engine/models` | Yes | List available LLM models |
+
+### Feedback
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/feedback` | Yes | Submit feedback on a query result |
+| GET | `/feedback` | Yes | List feedback entries |
+
+Request:
+
+```json
+{
+  "trace_id": "trace-456",
+  "rating": 5,
+  "comment": "Accurate answer with relevant sources"
+}
+```
+
+### Analytics
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/analytics` | Yes | Usage analytics (query counts, strategy distribution, latency) |
 
 ### AI Advisor
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/advisor/chat` | Chat with AI advisor for strategy recommendations |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/advisor/chat` | Yes | Chat with AI advisor for strategy recommendations |
 
-**Request body:**
+Request:
+
 ```json
 {
   "message": "I have technical documentation, ~500 pages",
@@ -120,18 +247,23 @@ data: {"done": true, "sources": [...], "trace_id": "abc-123"}
 }
 ```
 
-## RAG Strategies
+Response:
 
-| ID | Name | Use Case |
-|----|------|----------|
-| `naive` | Simple RAG | Quick prototyping, small collections |
-| `hybrid` | Hybrid RAG | General purpose, best balance of speed/quality |
-| `graph` | Graph RAG | Entity-rich documents, knowledge bases |
-| `agentic` | Agentic RAG | Complex multi-hop questions |
-| `memo` | MemoRAG | Large collections, recurring query patterns |
-| `corrective` | Corrective RAG | High-stakes queries requiring source validation |
+```json
+{
+  "reply": "For technical documentation of that size, I recommend...",
+  "session_id": "session-abc",
+  "recommendation": {
+    "strategy": "hybrid",
+    "confidence": 0.85,
+    "reasoning": "Hybrid RAG balances keyword and semantic search..."
+  }
+}
+```
 
 ## Error Responses
+
+All errors follow a consistent format:
 
 ```json
 {
@@ -143,8 +275,11 @@ data: {"done": true, "sources": [...], "trace_id": "abc-123"}
 | Code | Meaning |
 |------|---------|
 | 400 | Bad request (invalid parameters) |
-| 401 | Unauthorized (missing/invalid JWT) |
+| 401 | Unauthorized (missing or invalid API key / JWT) |
+| 403 | Forbidden (insufficient permissions) |
 | 404 | Resource not found |
-| 422 | Validation error (Pydantic) |
+| 413 | Payload too large (file upload exceeds limit) |
+| 422 | Validation error (Pydantic schema mismatch) |
+| 429 | Rate limit exceeded |
 | 500 | Internal server error |
 | 503 | Service unavailable (dependency down) |

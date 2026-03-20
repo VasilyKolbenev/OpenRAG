@@ -6,8 +6,11 @@ from fastapi import APIRouter
 
 from openrag.api.v1 import (
     advisor,
+    analytics,
     collections,
     documents,
+    engine,
+    feedback,
     graph,
     health,
     metrics,
@@ -32,3 +35,6 @@ api_router.include_router(graph.router)
 api_router.include_router(metrics.router)
 api_router.include_router(advisor.router)
 api_router.include_router(sessions.router)
+api_router.include_router(engine.router)
+api_router.include_router(feedback.router)
+api_router.include_router(analytics.router)
