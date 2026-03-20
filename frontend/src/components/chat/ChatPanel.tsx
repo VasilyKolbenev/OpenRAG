@@ -31,7 +31,7 @@ export default function ChatPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-[18px] bg-[#090909] border border-[#141414] rounded-t-[14px]">
+      <div className="flex-1 overflow-y-auto p-[18px] bg-serpent-bg border border-serpent-border-light rounded-t-[14px]">
         {messages.map((msg) => (
           <ChatMessage key={msg.id} msg={msg} />
         ))}

@@ -51,7 +51,7 @@ export function AdvisorChatbot() {
         aria-label="Open AI Advisor"
       >
         <span className="text-2xl group-hover:scale-110 transition-transform">
-          {isOpen ? '\u2715' : '\uD83D\uDC0D'}
+          {isOpen ? '\u2715' : '\u2728'}
         </span>
         {!isOpen && messages.length === 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
@@ -64,9 +64,9 @@ export function AdvisorChatbot() {
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-[#C8F547]/10 to-[#2DD4A8]/10 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl">{'\uD83D\uDC0D'}</span>
+              <span className="text-xl">{'\u2728'}</span>
               <div>
-                <h3 className="text-sm font-semibold text-white">Serpent Advisor</h3>
+                <h3 className="text-sm font-semibold text-white">OpenRAG AI</h3>
                 <p className="text-xs text-white/50">AI Strategy Consultant</p>
               </div>
             </div>
@@ -83,10 +83,10 @@ export function AdvisorChatbot() {
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.length === 0 && (
               <div className="text-center text-white/40 text-sm mt-8">
-                <p className="text-2xl mb-2">{'\uD83D\uDC0D'}</p>
-                <p>Hi! I&apos;m Serpent, your AI advisor.</p>
-                <p className="mt-1">Tell me about your use case and</p>
-                <p>I&apos;ll recommend the best RAG strategy.</p>
+                <p className="text-2xl mb-2">{'\u2728'}</p>
+                <p>Hi! I&apos;m your AI advisor.</p>
+                <p className="mt-1">Tell me about your documents and</p>
+                <p>I&apos;ll find the best approach.</p>
               </div>
             )}
 

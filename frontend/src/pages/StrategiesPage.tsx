@@ -43,7 +43,7 @@ export default function StrategiesPage() {
             color: showAdvisor ? '#C8F547' : '#777',
           }}
         >
-          {'\uD83D\uDC0D'} Strategy Advisor
+          {'\u2728'} Strategy Advisor
         </button>
       </div>
 
@@ -75,7 +75,7 @@ export default function StrategiesPage() {
       {/* Pipeline architecture */}
       <div className="mt-7 p-6 bg-serpent-surface border border-serpent-border-light rounded-[14px]">
         <h3 className="text-[14px] font-semibold mb-[18px] font-outfit tracking-tight text-serpent-text-secondary">
-          {'\uD83D\uDC0D'} Serpent Pipeline Architecture
+          OpenRAG Pipeline Architecture
         </h3>
         <div className="grid grid-cols-5 gap-[6px] text-center">
           {PIPELINE_STEPS.map((step, i) => (

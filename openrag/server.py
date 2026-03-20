@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI):
     # Auto-seed on first launch
     seed_dir = Path(__file__).parent.parent / "seed" / "documents"
     if seed_dir.exists():
-        is_seeded = await cache.get("openrag:seeded")
+        is_seeded = await cache._client.get("openrag:seeded")
         if not is_seeded:
             logger.info("First launch detected — seeding demo documents...")
             try:
@@ -111,7 +111,7 @@ async def lifespan(app: FastAPI):
                         "metadata": {"source": "seed", "filename": doc_file.name},
                     })
                     logger.info("Seeded: %s (%d chunks)", doc_file.name, chunks)
-                await cache.set("openrag:seeded", "1")
+                await cache._client.set("openrag:seeded", "1")
                 logger.info("Seed data loaded.")
             except Exception as e:
                 logger.warning("Seed failed (non-critical): %s", e)

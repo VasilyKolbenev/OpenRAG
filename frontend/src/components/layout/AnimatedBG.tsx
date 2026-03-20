@@ -1,11 +1,11 @@
 /**
- * Animated background with gradient orbs.
+ * Animated background with subtle gradient orbs.
  */
 
 export default function AnimatedBG() {
   return (
     <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-      {/* Scale pattern */}
+      {/* Subtle grid pattern */}
       <svg
         width="100%"
         height="100%"
@@ -13,22 +13,22 @@ export default function AnimatedBG() {
       >
         <defs>
           <pattern
-            id="snakeScale"
+            id="gridPattern"
             x="0"
             y="0"
-            width="40"
-            height="40"
+            width="48"
+            height="48"
             patternUnits="userSpaceOnUse"
           >
             <path
-              d="M20 0 Q30 10 20 20 Q10 30 20 40"
-              stroke="#C8F547"
+              d="M48 0H0v48"
+              stroke="#a1a1aa"
               strokeWidth="0.5"
               fill="none"
             />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#snakeScale)" />
+        <rect width="100%" height="100%" fill="url(#gridPattern)" />
       </svg>
 
       {/* Floating gradient orbs */}
@@ -36,14 +36,14 @@ export default function AnimatedBG() {
         className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] animate-serpent-float"
         style={{
           background:
-            'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
+            'radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 70%)',
         }}
       />
       <div
         className="absolute -bottom-[15%] -left-[5%] w-[500px] h-[500px] animate-serpent-float-reverse"
         style={{
           background:
-            'radial-gradient(circle, rgba(200,245,71,0.04) 0%, transparent 70%)',
+            'radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 70%)',
         }}
       />
       <div
