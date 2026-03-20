@@ -91,7 +91,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col"
+      className="fixed left-0 top-0 bottom-0 z-40 hidden lg:flex flex-col"
       style={{
         width: 240,
         backgroundColor: '#0c0e16',

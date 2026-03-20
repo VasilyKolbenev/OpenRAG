@@ -1,22 +1,18 @@
 # OpenRAG API Reference
 
-Base URL: `http://localhost:8000`
+Base URL: `http://localhost:8000/api`
 
 Interactive docs (Swagger UI): `http://localhost:8000/docs`
 
 ## Authentication
 
-All endpoints except `/health` require an API key:
+All endpoints except `/api/health` require an API key:
 
 ```
 X-API-Key: your-api-key
 ```
 
-Generate keys with:
-
-```bash
-openrag apikey-create --name dev
-```
+Set `OPENRAG_API_KEY` in your `.env` file or use the master key from configuration.
 
 JWT authentication is available as an opt-in fallback:
 
@@ -30,7 +26,7 @@ Authorization: Bearer <jwt-token>
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/health` | No | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
+| GET | `/api/health` | No | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
 
 Response:
 
@@ -50,10 +46,10 @@ Response:
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/query` | Yes | Execute RAG query with selected strategy |
-| POST | `/query/stream` | Yes | SSE streaming RAG query |
+| POST | `/api/query` | Yes | Execute RAG query with selected strategy |
+| POST | `/api/query/stream` | Yes | SSE streaming RAG query |
 
-**POST /query**
+**POST /api/query**
 
 Request:
 
@@ -84,7 +80,7 @@ Response:
 }
 ```
 
-**POST /query/stream**
+**POST /api/query/stream**
 
 Same request body. Returns `text/event-stream` (SSE):
 
@@ -99,7 +95,7 @@ data: {"done": true, "sources": [...], "trace_id": "abc-123"}
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/compare` | Yes | Run query through multiple strategies |
+| POST | `/api/compare` | Yes | Run query through multiple strategies |
 
 Request:
 
@@ -127,17 +123,17 @@ Response:
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/documents/upload` | Yes | Upload document (PDF, DOCX, TXT, MD, CSV) |
-| GET | `/documents` | Yes | List all documents |
-| GET | `/documents/{id}` | Yes | Get document details |
-| DELETE | `/documents/{id}` | Yes | Delete document and its chunks |
+| POST | `/api/documents/upload` | Yes | Upload document (PDF, DOCX, TXT, MD, CSV) |
+| GET | `/api/documents` | Yes | List all documents |
+| GET | `/api/documents/{id}` | Yes | Get document details |
+| DELETE | `/api/documents/{id}` | Yes | Delete document and its chunks |
 
-**POST /documents/upload**
+**POST /api/documents/upload**
 
 Multipart form upload:
 
 ```bash
-curl -X POST http://localhost:8000/documents/upload \
+curl -X POST http://localhost:8000/api/documents/upload \
   -H "X-API-Key: your-key" \
   -F "file=@report.pdf" \
   -F "collection=research"
@@ -159,15 +155,15 @@ Response:
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/collections` | Yes | List all vector collections |
-| POST | `/collections` | Yes | Create new collection |
-| DELETE | `/collections/{name}` | Yes | Delete collection |
+| GET | `/api/collections` | Yes | List all vector collections |
+| POST | `/api/collections` | Yes | Create new collection |
+| DELETE | `/api/collections/{name}` | Yes | Delete collection |
 
 ### Strategies
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/strategies` | Yes | List available RAG strategies with metadata |
+| GET | `/api/strategies` | Yes | List available RAG strategies with metadata |
 
 Response:
 
@@ -187,56 +183,14 @@ Response:
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/traces/{trace_id}` | Yes | Get full pipeline trace |
-| GET | `/traces` | Yes | List recent traces |
-
-### Graph Explorer
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/graph/explore` | Yes | Get entity-relationship graph data |
-| GET | `/graph/entities` | Yes | Search entities in knowledge graph |
-
-### Quality Metrics
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/metrics/quality` | Yes | RAGAS evaluation metrics |
-
-### Engine
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/engine/models` | Yes | List available LLM models |
-
-### Feedback
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/feedback` | Yes | Submit feedback on a query result |
-| GET | `/feedback` | Yes | List feedback entries |
-
-Request:
-
-```json
-{
-  "trace_id": "trace-456",
-  "rating": 5,
-  "comment": "Accurate answer with relevant sources"
-}
-```
-
-### Analytics
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/analytics` | Yes | Usage analytics (query counts, strategy distribution, latency) |
+| GET | `/api/traces/{trace_id}` | Yes | Get full pipeline trace |
+| GET | `/api/traces` | Yes | List recent traces |
 
 ### AI Advisor
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/advisor/chat` | Yes | Chat with AI advisor for strategy recommendations |
+| POST | `/api/advisor/chat` | Yes | Chat with AI advisor for strategy recommendations |
 
 Request:
 

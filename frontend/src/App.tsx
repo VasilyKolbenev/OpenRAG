@@ -45,7 +45,7 @@ function AppShell() {
     <div className="min-h-screen bg-serpent-bg text-serpent-text font-dm-sans relative flex">
       <AnimatedBG />
       <Sidebar />
-      <main className="flex-1 ml-[240px] px-8 py-7 relative z-10 min-h-screen">
+      <main className="flex-1 ml-0 lg:ml-[240px] px-4 lg:px-8 py-7 relative z-10 min-h-screen">
         <ErrorBoundary>
           <Routes>
             <Route path="/dashboard" element={<DashboardPage />} />

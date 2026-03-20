@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/stores/appStore';
 import { api } from '@/lib/api';
 import { STRATEGIES } from '@/lib/constants';
+import type { RAGStrategy } from '@/types/api';
 
 interface DashboardStats {
   documentsCount: number;
@@ -22,6 +23,7 @@ const TIPS = [
 export default function DashboardPage() {
   const navigate = useNavigate();
   const healthStatus = useAppStore((s) => s.healthStatus);
+  const setSelectedStrategy = useAppStore((s) => s.setSelectedStrategy);
 
   const [stats, setStats] = useState<DashboardStats>({
     documentsCount: 0,
@@ -126,7 +128,10 @@ export default function DashboardPage() {
           {STRATEGIES.map((s) => (
             <button
               key={s.id}
-              onClick={() => navigate('/chat')}
+              onClick={() => {
+                setSelectedStrategy(s.id as RAGStrategy);
+                navigate('/chat');
+              }}
               className="flex items-center gap-2 rounded-lg border border-serpent-border-light bg-serpent-surface px-3 py-2 text-sm text-serpent-text transition-colors hover:border-serpent-border-hover hover:bg-serpent-surface-hover"
             >
               <span

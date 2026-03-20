@@ -45,11 +45,9 @@ Every RAG strategy is a composition of these 5 primitives. Add a new strategy by
 - **6 RAG strategies** -- Naive, Hybrid, Graph, Agentic, MemoRAG, Corrective RAG
 - **Pipeline tracing** -- Full step-by-step trace for every query (RAG Debugger)
 - **A/B Compare** -- Run the same query through multiple strategies side-by-side
-- **Graph Explorer** -- Interactive Neo4j knowledge graph visualization
 - **MCP integration** -- Use OpenRAG as a tool from Claude Desktop or any MCP client
 - **CLI** -- `openrag query`, `openrag compare`, `openrag upload` and more
 - **SSE streaming** -- Real-time token-by-token response streaming
-- **Quality dashboard** -- RAGAS metrics (context relevance, faithfulness, answer relevance)
 - **AI Advisor** -- Chatbot that recommends the best strategy for your use case
 - **Multi-tenancy** -- Opt-in tenant isolation via JWT claims
 
@@ -137,20 +135,15 @@ Full MCP reference: [docs/MCP.md](docs/MCP.md)
 
 | Group | Endpoint | Description |
 |-------|----------|-------------|
-| Health | `GET /health` | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
-| Query | `POST /query` | RAG query with selected strategy |
-| Stream | `POST /query/stream` | SSE streaming response |
-| Compare | `POST /compare` | A/B test multiple strategies |
-| Documents | `POST /documents/upload` | Upload PDF, DOCX, TXT, MD |
-| Collections | `CRUD /collections` | Manage vector collections |
-| Strategies | `GET /strategies` | List available strategies |
-| Traces | `GET /traces/{id}` | Pipeline trace (RAG Debugger) |
-| Graph | `GET /graph/explore` | Knowledge graph visualization |
-| Metrics | `GET /metrics/quality` | RAGAS quality metrics |
-| Engine | `GET /engine/models` | Available LLM models |
-| Feedback | `POST /feedback` | Submit query feedback |
-| Analytics | `GET /analytics` | Usage analytics |
-| Advisor | `POST /advisor/chat` | AI strategy recommendation |
+| Health | `GET /api/health` | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
+| Query | `POST /api/query` | RAG query with selected strategy |
+| Stream | `POST /api/query/stream` | SSE streaming response |
+| Compare | `POST /api/compare` | A/B test multiple strategies |
+| Documents | `POST /api/documents/upload` | Upload PDF, DOCX, TXT, MD |
+| Collections | `CRUD /api/collections` | Manage vector collections |
+| Strategies | `GET /api/strategies` | List available strategies |
+| Traces | `GET /api/traces/{id}` | Pipeline trace (RAG Debugger) |
+| Advisor | `POST /api/advisor/chat` | AI strategy recommendation |
 
 Full API reference: [docs/API.md](docs/API.md)
 
