@@ -8,7 +8,7 @@ import ChatPage from '@/pages/ChatPage';
 import DebuggerPage from '@/pages/DebuggerPage';
 import ComparePage from '@/pages/ComparePage';
 import DocumentsPage from '@/pages/DocumentsPage';
-import { AdvisorChatbot } from '@/components/advisor/AdvisorChatbot';
+import IntelligencePage from '@/pages/IntelligencePage';
 import { useAppStore } from '@/stores/appStore';
 import { api } from '@/lib/api';
 import { HEALTH_POLL_INTERVAL } from '@/lib/constants';
@@ -49,6 +49,7 @@ function AppShell() {
         <ErrorBoundary>
           <Routes>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/intelligence" element={<IntelligencePage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/debugger" element={<DebuggerPage />} />
@@ -58,7 +59,6 @@ function AppShell() {
           </Routes>
         </ErrorBoundary>
       </main>
-      <AdvisorChatbot />
     </div>
   );
 }

@@ -1,138 +1,122 @@
 # OpenRAG — Investor Demo Runbook
 
+## Architecture: 5 Primitives
+
+OpenRAG is built on 5 primitives — each card on the dashboard represents a core subsystem:
+
+| Primitive | Purpose | Demo Proof |
+|-----------|---------|------------|
+| **Intelligence** | RAG strategy catalog + AI auto-recommendation | Advisor page, Chat |
+| **Engine** | Embedding, vector store, LLM runtime | Health status, model info |
+| **Agents** | Background document processing pipeline | Documents page |
+| **Tools & Memory** | MCP integration, CLI, semantic memory | MCP tools, CLI commands |
+| **Learning** | Trace-based pipeline analysis & optimization | Debugger page |
+
 ## 1. Pre-demo Setup (5 min)
 
 ```bash
-# Start the full stack
 cd serpent-rag-platform
 docker compose up -d
 
 # Wait for healthy
 curl http://localhost:8000/api/health
-# Expected: {"status": "healthy", "services": {...}}
 
-# Verify seed data loaded
+# Verify seed data
 docker compose logs api | grep "Seed data loaded"
 ```
 
-If seed didn't auto-run:
-```bash
-docker compose restart api
-```
-
-Start the frontend dev server (if not using Docker frontend):
-```bash
-cd frontend && npm run dev
-```
+Frontend: **http://localhost:3000** (Docker) or start `cd frontend && npm run dev`
 
 ## 2. Demo Flow
 
-### Step 1 — Dashboard (entry point)
+### Step 1 — Command Center (Dashboard)
 
-- Open **http://localhost:3000** (Docker) or **http://localhost:5173** (dev server)
-- You land on the **Dashboard** page
-- Point out:
-  - **Documents Indexed** — number of documents in the system
-  - **Collections** — how many knowledge bases exist
-  - **System Status** — real-time health of all services
-  - **Strategies Available** — 6 RAG strategies built-in
-- Show **Quick Actions**: Upload Documents, Ask Your Documents, Compare Strategies
+- Open the app → lands on **Command Center**
+- Show 5 primitive cards — each with live stats:
+  - **Intelligence**: 6 strategies, AI Advisor link
+  - **Engine**: MiniLM-L6-v2 embedding, services online
+  - **Agents**: documents indexed, collections count
+  - **Tools & Memory**: 6 MCP tools, 8 CLI commands
+  - **Learning**: Pipeline traces, real-time debugger
+- Key message: *"Each primitive is a pluggable subsystem — swap components without rewriting"*
 
-### Step 2 — Documents
+### Step 2 — Intelligence (AI Advisor)
 
-- Click **Documents** in the sidebar (or "Upload Documents" button)
-- Show 3 pre-loaded demo documents from seed:
-  - `openrag-docs.md` — Platform documentation
-  - `rag-overview.md` — RAG technology overview
-  - `sample-policy.md` — Sample enterprise policy
-- Key message: "Documents are automatically parsed, chunked, and embedded on upload"
+- Click **Advisor** in sidebar → full-page AI Strategy Advisor
+- Left panel: conversational AI chat
+- Right panel: strategy catalog with 6 strategies
+- Try prompt: *"I have legal contracts to analyze"*
+- AI recommends a strategy → click **"Use This Strategy →"** → goes to Chat
+- Key message: *"AI doesn't just catalog strategies — it analyzes your use case and recommends"*
 
-### Step 3 — Chat (main feature)
+### Step 3 — Chat (Query)
 
-- Click **Chat** in the sidebar (or "Ask Your Documents" on Dashboard)
-- Select **Hybrid RAG** strategy from the dropdown
+- Strategy is pre-selected from Advisor recommendation
 - Ask: **"What is RAG and how does OpenRAG implement it?"**
-- Point out:
-  - Real-time **token streaming** (SSE)
-  - **Source citations** with relevance scores
-  - **Strategy indicator** showing which RAG approach was used
-- Try another strategy: switch to **Agentic RAG** and ask: **"How do I deploy OpenRAG in production?"**
+- Show: real-time **token streaming**, **source citations**, **trace link**
+- Switch strategy via dropdown → ask same question → different approach
+- Key message: *"Same question, different strategy — different strengths"*
 
-### Step 4 — Debugger (RAG pipeline trace)
+### Step 4 — Agents (Documents)
 
-- Click **Debugger** in the sidebar
-- Open the trace from your last query
-- Show the **pipeline visualization**: embedding → retrieval → reranking → generation
-- Point out: latency per stage, retrieved chunks, model used
-- Key message: "Full observability of every RAG step — debug and optimize your pipeline"
+- Click **Documents** in sidebar
+- Show pre-loaded seed documents (3 markdown files)
+- Upload a new file via drag & drop
+- Key message: *"Background agents parse, chunk, embed — fully automatic"*
 
-### Step 5 — Compare (A/B testing)
+### Step 5 — Learning (Debugger)
 
-- Click **Compare** in the sidebar
-- Enter: **"Compare the different RAG strategies available"**
+- Click **Debugger** in sidebar
+- Open trace from last query
+- Show pipeline: embedding → retrieval → reranking → generation
+- Point out: latency per stage, chunks retrieved, model used
+- Key message: *"Every query generates a trace — data for continuous optimization"*
+
+### Step 6 — Compare (A/B Testing)
+
+- Click **Compare** in sidebar
+- Enter: **"Compare the RAG strategies"**
 - Select **Naive** vs **Hybrid** vs **Agentic**
-- Show side-by-side results: different answers, latency, source counts
-- Key message: "Compare strategies on real data before choosing — no guesswork"
-
-### Step 6 — Strategy Selection from Dashboard (optional)
-
-- Go back to **Dashboard**
-- Click on any strategy card (e.g., "MemoRAG")
-- It navigates to Chat with that strategy pre-selected
-- Key message: "One-click strategy switching for different use cases"
-
-### Step 7 — CLI & MCP (for technical audience, optional)
-
-```bash
-# CLI query
-openrag query "What is RAG?" -s hybrid
-
-# Show available strategies
-openrag strategies
-
-# Check system health
-openrag status
-```
-
-Key message: "Full CLI + MCP integration — use OpenRAG from terminal or Claude Desktop"
+- Show side-by-side results
+- Key message: *"Data-driven strategy selection, not guesswork"*
 
 ## 3. Suggested Demo Questions
 
 | Question | Best Strategy | Why |
 |----------|--------------|-----|
-| "What is RAG and how does it work?" | Naive / Hybrid | Simple factual, shows speed |
-| "Compare the different RAG strategies" | Hybrid | Multi-source synthesis |
-| "What are the security policies?" | Naive | Direct document lookup |
-| "How do I deploy OpenRAG in production?" | Agentic | Complex multi-step answer |
-| "What monitoring and observability is available?" | Hybrid | Cross-document synthesis |
+| "What is RAG?" | Naive / Hybrid | Simple factual, shows speed |
+| "Compare strategies" | Hybrid | Multi-source synthesis |
+| "Security policies?" | Naive | Direct document lookup |
+| "Deploy OpenRAG in production?" | Agentic | Complex multi-step |
+| "Monitoring and observability?" | Hybrid | Cross-document |
 
 ## 4. Pages to Show
 
-| Page | Route | Status | Notes |
-|------|-------|--------|-------|
-| Dashboard | `/dashboard` | Ready | Entry point, stats, quick actions |
-| Chat | `/chat` | Ready | Streaming, strategy selection |
-| Documents | `/documents` | Ready | Seed docs visible, upload works |
-| Debugger | `/debugger` | Ready | Pipeline trace viewer |
-| Compare | `/compare` | Ready | A/B strategy comparison |
+| Page | Route | Primitive |
+|------|-------|-----------|
+| Command Center | `/dashboard` | All 5 |
+| Advisor | `/intelligence` | Intelligence |
+| Chat | `/chat` | Intelligence |
+| Documents | `/documents` | Agents |
+| Debugger | `/debugger` | Learning |
+| Compare | `/compare` | Intelligence |
 
-## 5. Pages NOT in Demo (hidden)
+## 5. Investor Talking Points
 
-These pages are hidden from navigation and should not be accessed:
+1. **5-Primitive Architecture** — modular, each subsystem independently replaceable
+2. **6 RAG Strategies** — from simple to autonomous multi-step reasoning
+3. **AI-Powered Advisor** — auto-recommends strategy based on use case
+4. **Full Observability** — pipeline traces for every query
+5. **Self-Hosted** — data never leaves customer infrastructure
+6. **Multi-Interface** — Web UI + CLI + MCP (Claude Desktop integration)
+7. **Learning Loop** — traces become optimization data (roadmap: auto-tuning)
+
+## 6. Known Limitations (do not demo)
 
 - Graph Explorer (requires populated Neo4j)
 - Quality Dashboard (requires RAGAS evaluation dataset)
-- Analytics (placeholder data)
-- Feedback (not connected to DB)
-
-## 6. Talking Points
-
-- **Self-hosted** — your data never leaves your infrastructure
-- **6 strategies** — from simple vector search to autonomous multi-step reasoning
-- **Full observability** — trace every step of the RAG pipeline
-- **A/B testing** — compare strategies before deploying to production
-- **Extensible** — add new strategies by composing 5 primitives
-- **Integration** — CLI, MCP (Claude Desktop), REST API
+- Analytics (placeholder)
+- Web search fallback in CRAG (requires Tavily API key)
 
 ## 7. Troubleshooting
 
@@ -140,6 +124,5 @@ These pages are hidden from navigation and should not be accessed:
 |-------|-----|
 | API returns 500 | `docker compose logs api` |
 | No seed documents | `docker compose restart api` |
-| Embedding slow on first query | First query loads model (~3 sec), subsequent are fast |
-| Frontend shows "Services offline" | Wait for API to initialize, check health endpoint |
-| Port 3000 occupied | Use `npm run dev` for local dev server (port 5173) |
+| Slow first query | Model loading (~3 sec), subsequent fast |
+| "Services offline" | Wait for API init, check health endpoint |

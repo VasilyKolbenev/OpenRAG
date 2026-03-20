@@ -95,7 +95,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         <button
           onClick={handleSend}
           disabled={disabled || !value.trim()}
-          className="px-[18px] py-[9px] text-[11px] bg-[#00d4ff] text-[#0a0a0a] border-none rounded-[7px] font-semibold cursor-pointer font-outfit transition-opacity duration-200 hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-[18px] py-[9px] text-[11px] bg-[#C8F547] text-[#0f1117] border-none rounded-[7px] font-semibold cursor-pointer font-outfit transition-opacity duration-200 hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Send
         </button>
