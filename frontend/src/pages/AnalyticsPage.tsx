@@ -1,17 +1,17 @@
 /**
  * AnalyticsPage — query analytics dashboard.
- * Fetches from GET /api/v1/analytics.
+ * Fetches from GET /api/analytics.
  */
 
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { api, type AnalyticsData } from '../lib/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
 
   useEffect(() => {
-    api.get('/analytics').then(res => setData(res.data));
+    api.getAnalytics().then(setData);
   }, []);
 
   if (!data) return <div className="p-8 text-serpent-muted">Loading analytics...</div>;

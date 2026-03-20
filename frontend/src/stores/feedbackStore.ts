@@ -11,7 +11,7 @@ export const useFeedbackStore = create<FeedbackState>((set) => ({
   submitFeedback: async (queryId, rating, comment) => {
     set({ submitting: true });
     try {
-      await api.post('/feedback', { query_id: queryId, rating, comment });
+      await api.submitFeedback({ query_id: queryId, rating, comment });
     } finally {
       set({ submitting: false });
     }

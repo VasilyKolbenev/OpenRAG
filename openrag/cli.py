@@ -32,7 +32,7 @@ def _headers() -> dict[str, str]:
 
 def _api_get(path: str) -> dict:
     try:
-        resp = httpx.get(f"{API_URL}/api/v1{path}", headers=_headers(), timeout=30)
+        resp = httpx.get(f"{API_URL}/api{path}", headers=_headers(), timeout=30)
         resp.raise_for_status()
         return resp.json()
     except httpx.ConnectError:
@@ -45,7 +45,7 @@ def _api_get(path: str) -> dict:
 
 def _api_post(path: str, data: dict) -> dict:
     try:
-        resp = httpx.post(f"{API_URL}/api/v1{path}", json=data, headers=_headers(), timeout=120)
+        resp = httpx.post(f"{API_URL}/api{path}", json=data, headers=_headers(), timeout=120)
         resp.raise_for_status()
         return resp.json()
     except httpx.ConnectError:
@@ -152,14 +152,14 @@ def upload(
         typer.echo(f"Uploading {f.name}...")
         with open(f, "rb") as fh:
             resp = httpx.post(
-                f"{API_URL}/api/v1/documents/upload",
+                f"{API_URL}/api/documents/upload",
                 files={"file": (f.name, fh)},
                 data={"collection": collection},
                 headers={"X-API-Key": API_KEY} if API_KEY else {},
                 timeout=120,
             )
-        if resp.status_code == 200:
-            typer.echo(f"  OK: {resp.json().get('document_id', 'uploaded')}")
+        if resp.status_code in (200, 201):
+            typer.echo(f"  OK: {resp.json().get('id', 'uploaded')}")
         else:
             typer.echo(f"  Error: {resp.status_code}", err=True)
 
@@ -219,7 +219,7 @@ def init() -> None:
     import time
     for _ in range(30):
         try:
-            resp = httpx.get(f"{API_URL}/api/v1/health", timeout=5)
+            resp = httpx.get(f"{API_URL}/api/health", timeout=5)
             if resp.status_code == 200:
                 typer.echo("[OK] API is healthy")
                 break
@@ -260,7 +260,7 @@ def apikey_create(name: str = typer.Option(..., help="Name for the API key")) ->
     key = f"orag_{secrets.token_hex(24)}"
     hashed = hashlib.sha256(key.encode()).hexdigest()
     try:
-        resp = httpx.post(f"{API_URL}/api/v1/apikeys", json={
+        resp = httpx.post(f"{API_URL}/api/apikeys", json={
             "name": name,
             "hashed_key": hashed,
         }, headers=_headers(), timeout=30)
@@ -296,7 +296,7 @@ def apikey_list() -> None:
 def apikey_revoke(key_id: str = typer.Argument(..., help="API key ID to revoke")) -> None:
     """Revoke an API key."""
     try:
-        resp = httpx.delete(f"{API_URL}/api/v1/apikeys/{key_id}", headers=_headers(), timeout=30)
+        resp = httpx.delete(f"{API_URL}/api/apikeys/{key_id}", headers=_headers(), timeout=30)
         if resp.status_code == 200:
             typer.echo(f"API key {key_id} revoked.")
         else:

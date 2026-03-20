@@ -1,6 +1,14 @@
 """MCP server tool tests."""
 
-from openrag.tools.mcp_server import TOOL_DEFINITIONS, RESOURCE_DEFINITIONS
+import pytest
+
+try:
+    from openrag.tools.mcp_server import TOOL_DEFINITIONS, RESOURCE_DEFINITIONS
+    HAS_MCP = True
+except ImportError:
+    HAS_MCP = False
+
+pytestmark = pytest.mark.skipif(not HAS_MCP, reason="mcp package not installed")
 
 
 def test_mcp_server_has_required_tools():

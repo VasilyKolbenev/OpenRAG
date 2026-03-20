@@ -1,6 +1,5 @@
 /**
- * Animated background with serpentine pattern + floating gradient orbs.
- * Ported from serpent-rag-ui.jsx.
+ * Animated background with gradient orbs.
  */
 
 export default function AnimatedBG() {

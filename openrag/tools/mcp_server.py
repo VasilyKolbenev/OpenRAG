@@ -120,37 +120,41 @@ def create_mcp_server() -> Server:
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         async with httpx.AsyncClient(base_url=API_URL, headers=_headers(), timeout=120) as client:
             if name == "openrag_query":
-                resp = await client.post("/api/v1/query", json={
+                resp = await client.post("/api/query", json={
                     "query": arguments["query"],
                     "strategy": arguments.get("strategy", "naive"),
                     "collection": arguments.get("collection", "default"),
                     "top_k": arguments.get("top_k", 5),
                 })
             elif name == "openrag_strategies":
-                resp = await client.get("/api/v1/strategies")
+                resp = await client.get("/api/strategies")
             elif name == "openrag_compare":
-                resp = await client.post("/api/v1/compare", json={
+                resp = await client.post("/api/compare", json={
                     "query": arguments["query"],
                     "strategies": arguments["strategies"],
                 })
             elif name == "openrag_status":
-                resp = await client.get("/api/v1/health")
+                resp = await client.get("/api/health")
             elif name == "openrag_collections":
                 action = arguments["action"]
                 if action == "list":
-                    resp = await client.get("/api/v1/collections")
+                    resp = await client.get("/api/collections")
                 elif action == "create":
-                    resp = await client.post("/api/v1/collections", json={"name": arguments["name"]})
+                    resp = await client.post("/api/collections", json={"name": arguments["name"]})
                 elif action == "delete":
-                    resp = await client.delete(f"/api/v1/collections/{arguments['name']}")
+                    resp = await client.delete(f"/api/collections/{arguments['name']}")
                 else:
                     return [TextContent(type="text", text=f"Unknown action: {action}")]
             elif name == "openrag_upload":
-                resp = await client.post("/api/v1/documents/upload", data={
-                    "content": arguments["content"],
-                    "filename": arguments["filename"],
-                    "collection": arguments.get("collection", "default"),
-                })
+                filename = arguments["filename"]
+                content = arguments["content"].encode("utf-8")
+                collection = arguments.get("collection", "default")
+                # Backend expects multipart file upload
+                resp = await client.post(
+                    "/api/documents/upload",
+                    files={"file": (filename, content, "text/plain")},
+                    data={"collection": collection},
+                )
             else:
                 return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
@@ -168,12 +172,12 @@ def create_mcp_server() -> Server:
     async def read_resource(uri: str) -> str:
         async with httpx.AsyncClient(base_url=API_URL, headers=_headers(), timeout=30) as client:
             if uri == "openrag://metrics":
-                resp = await client.get("/api/v1/metrics/quality")
+                resp = await client.get("/api/metrics/quality")
                 resp.raise_for_status()
                 return json.dumps(resp.json(), indent=2)
             if uri.startswith("openrag://traces/"):
                 trace_id = uri.split("/")[-1]
-                resp = await client.get(f"/api/v1/traces/{trace_id}")
+                resp = await client.get(f"/api/traces/{trace_id}")
                 resp.raise_for_status()
                 return json.dumps(resp.json(), indent=2)
             return f"Unknown resource: {uri}"

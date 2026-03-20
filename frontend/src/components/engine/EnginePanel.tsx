@@ -1,24 +1,16 @@
 /**
  * EnginePanel — displays configured models and their status.
- * Fetches from GET /api/v1/engine/models.
+ * Fetches from GET /api/engine/models.
  */
 
 import { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
-
-interface ModelInfo {
-  name: string;
-  provider: string;
-  type: string;
-  status: string;
-  latency_ms: number | null;
-}
+import { api, type EngineModel } from '../../lib/api';
 
 export default function EnginePanel() {
-  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [models, setModels] = useState<EngineModel[]>([]);
 
   useEffect(() => {
-    api.get('/engine/models').then(res => setModels(res.data.models || []));
+    api.getEngineModels().then(res => setModels(res.models || []));
   }, []);
 
   return (

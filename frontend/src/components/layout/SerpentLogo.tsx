@@ -1,5 +1,5 @@
 /**
- * SVG serpent logo — ported from serpent-rag-ui.jsx.
+ * SVG logo component.
  */
 
 interface SerpentLogoProps {

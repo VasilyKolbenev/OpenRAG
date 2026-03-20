@@ -80,8 +80,38 @@ async def lifespan(app: FastAPI):
         is_seeded = await cache.get("openrag:seeded")
         if not is_seeded:
             logger.info("First launch detected — seeding demo documents...")
-            await cache.set("openrag:seeded", "1")
-            logger.info("Seed data loaded.")
+            try:
+                from openrag.tools.document_processor import DocumentProcessorService
+                import uuid as _uuid
+
+                processor = DocumentProcessorService(
+                    embedding_service=embedding,
+                    vector_store=vector_store,
+                    graph_store=graph_store,
+                )
+                for doc_file in sorted(seed_dir.glob("*.md")):
+                    doc_id = str(_uuid.uuid4())
+                    chunks = await processor.process_file(
+                        file_path=str(doc_file),
+                        document_id=doc_id,
+                        collection="default",
+                        metadata={"source": "seed", "filename": doc_file.name},
+                    )
+                    # Store doc status in cache so it appears on Documents page
+                    await cache.store_trace(f"doc_status:{doc_id}", {
+                        "id": doc_id,
+                        "filename": doc_file.name,
+                        "status": "completed",
+                        "chunks": chunks,
+                        "collection": "default",
+                        "file_size": doc_file.stat().st_size,
+                        "created_at": "seed",
+                    })
+                    logger.info("Seeded: %s (%d chunks)", doc_file.name, chunks)
+                await cache.set("openrag:seeded", "1")
+                logger.info("Seed data loaded.")
+            except Exception as e:
+                logger.warning("Seed failed (non-critical): %s", e)
 
     logger.info("All services initialized")
     yield

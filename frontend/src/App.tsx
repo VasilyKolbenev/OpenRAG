@@ -7,10 +7,7 @@ import StrategiesPage from '@/pages/StrategiesPage';
 import ChatPage from '@/pages/ChatPage';
 import DebuggerPage from '@/pages/DebuggerPage';
 import ComparePage from '@/pages/ComparePage';
-import GraphPage from '@/pages/GraphPage';
-import QualityPage from '@/pages/QualityPage';
 import DocumentsPage from '@/pages/DocumentsPage';
-import AnalyticsPage from '@/pages/AnalyticsPage';
 import { AdvisorChatbot } from '@/components/advisor/AdvisorChatbot';
 import { useAppStore } from '@/stores/appStore';
 import { api } from '@/lib/api';
@@ -57,9 +54,6 @@ function AppShell() {
             <Route path="/debugger" element={<DebuggerPage />} />
             <Route path="/debugger/:traceId" element={<DebuggerPage />} />
             <Route path="/compare" element={<ComparePage />} />
-            <Route path="/graph" element={<GraphPage />} />
-            <Route path="/quality" element={<QualityPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="*" element={<Navigate to="/strategies" replace />} />
           </Routes>
         </ErrorBoundary>

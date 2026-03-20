@@ -1,5 +1,5 @@
 /**
- * Typed API client for SerpentRAG backend.
+ * Typed API client for OpenRAG backend.
  * All requests go through /api/ prefix (Vite proxy in dev, Traefik in prod).
  */
 
@@ -250,6 +250,48 @@ export async function health(): Promise<HealthResponse> {
   return request<HealthResponse>('/health');
 }
 
+// ── Analytics ─────────────────────────────────────
+
+export interface AnalyticsData {
+  strategy_usage: Record<string, number>;
+  avg_latency_by_strategy: Record<string, number>;
+  total_queries: number;
+  top_queries: string[];
+}
+
+export async function getAnalytics(): Promise<AnalyticsData> {
+  return request<AnalyticsData>('/analytics');
+}
+
+// ── Engine Models ─────────────────────────────────
+
+export interface EngineModel {
+  name: string;
+  provider: string;
+  type: string;
+  status: string;
+  latency_ms: number | null;
+}
+
+export async function getEngineModels(): Promise<{ models: EngineModel[] }> {
+  return request<{ models: EngineModel[] }>('/engine/models');
+}
+
+// ── Feedback ──────────────────────────────────────
+
+export interface FeedbackRequest {
+  query_id: string;
+  rating: string;
+  comment?: string;
+}
+
+export async function submitFeedback(params: FeedbackRequest): Promise<{ status: string }> {
+  return request<{ status: string }>('/feedback', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
 // ── Export as namespace ────────────────────────────
 
 export const api = {
@@ -270,6 +312,9 @@ export const api = {
   listSessions,
   deleteSession,
   health,
+  getAnalytics,
+  getEngineModels,
+  submitFeedback,
 } as const;
 
 export { ApiError };

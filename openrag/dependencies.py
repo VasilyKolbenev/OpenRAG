@@ -89,13 +89,12 @@ async def require_auth(
 
 
 async def require_auth_in_production(
-    user: Optional[dict] = Depends(get_current_user),
+    user: Optional[dict] = Depends(get_api_key_or_jwt),
 ) -> Optional[dict]:
     """Require auth in production, optional in development.
 
-    Self-hosted deployments often run without auth. This dependency
+    Accepts API key (X-API-Key header) as primary auth, JWT as fallback.
+    Self-hosted deployments often run without auth — this dependency
     enforces auth only when ENVIRONMENT=production.
     """
-    if settings.is_production and user is None:
-        raise HTTPException(status_code=401, detail="Authentication required")
     return user

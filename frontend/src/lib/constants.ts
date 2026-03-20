@@ -1,6 +1,6 @@
 /**
  * Design tokens, strategy data, and advisor questions.
- * Ported from serpent-rag-ui.jsx.
+ * Shared constants for the OpenRAG frontend.
  */
 
 import type { StrategyMeta, AdvisorQuestion, TabInfo, PipelineConfigItem } from '@/types/ui';
@@ -219,8 +219,6 @@ export const TABS: TabInfo[] = [
   { id: 'documents', label: 'Documents', icon: '\u25AB' },
   { id: 'debugger', label: 'Debugger', icon: '\u25C6' },
   { id: 'compare', label: 'Compare', icon: '\u2261' },
-  { id: 'graph', label: 'Graph', icon: '\u25CE' },
-  { id: 'quality', label: 'Quality', icon: '\u25A3' },
 ];
 
 // ── Pipeline Configs per Strategy ──────────────────

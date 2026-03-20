@@ -1,4 +1,4 @@
-# SerpentRAG — Manual UI Testing Checklist
+# OpenRAG — Manual UI Testing Checklist
 
 **URL:** http://localhost:3000
 **API:** http://localhost:8000
@@ -9,7 +9,7 @@
 
 - [x] Docker stack running: `docker compose ps` — all 7 services up
 - [x] API healthy: `curl http://localhost:8000/health` returns `"status": "healthy"`
-- [x] Frontend loads: http://localhost:3000 shows SerpentRAG UI
+- [x] Frontend loads: http://localhost:3000 shows OpenRAG UI
 - [x] API keys configured in `.env` (OPENAI_API_KEY and/or ANTHROPIC_API_KEY)
 
 ---
