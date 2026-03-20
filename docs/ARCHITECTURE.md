@@ -2,25 +2,28 @@
 
 ## 5-Primitive Model
 
-OpenRAG decomposes every RAG pipeline into 5 universal primitives. Each strategy is a unique composition of these primitives.
+OpenRAG is built on 5 primitives. Each RAG strategy is a unique composition of these primitives.
 
 | # | Primitive | Responsibility | Key Components |
 |---|-----------|---------------|----------------|
-| 1 | **Ingest** | Parse documents, chunk text, compute embeddings | DocumentProcessor, EmbeddingService |
-| 2 | **Store** | Persist vectors, graph triples, relational data | VectorStore (Qdrant), GraphStore (Neo4j), PostgreSQL |
-| 3 | **Retrieve** | Search, rank, filter relevant chunks | VectorStore.search, ColBERT reranker, graph traversal |
-| 4 | **Reason** | Route queries, plan retrieval, judge relevance | Strategy orchestration, CRAG grading, sufficiency check |
-| 5 | **Generate** | Produce answers via LLM, stream tokens | LLMService, SSE streaming |
+| 1 | **Intelligence** | Strategy catalog, AI advisor, auto-recommendation | StrategyFactory, AdvisorService, 6 RAG strategies |
+| 2 | **Engine** | Embedding, vector store, LLM inference runtime | EmbeddingService, LLMService, VectorStore, GraphStore |
+| 3 | **Agents** | Background document processing, pipeline orchestration | Celery workers, DocumentProcessor, Evaluator |
+| 4 | **Tools & Memory** | MCP integration, CLI, semantic memory, connectors | MCP Server (6 tools), Typer CLI (8 commands), Redis cache |
+| 5 | **Learning** | Pipeline tracing, quality analysis, feedback loop | TracingService, EvaluationService, RAG Debugger |
 
-### Mapping from OpenJarvis Primitives
+## RAG Strategies
 
-| OpenJarvis | OpenRAG | Notes |
-|------------|---------|-------|
-| Ingest | Ingest | Same: parse + chunk + embed |
-| Store | Store | Extended: vector + graph + SQL |
-| Retrieve | Retrieve | Extended: reranking, graph traversal |
-| Reason | Reason | New: strategy routing, CRAG grading, context sufficiency |
-| Generate | Generate | Same: LLM completion + streaming |
+Each strategy composes the 5 primitives differently:
+
+| Strategy | Retrieve | Reason | Generate | Special |
+|----------|----------|--------|----------|---------|
+| **Simple (naive)** | Vector search | — | LLM | Fastest, simplest |
+| **Hybrid** | Vector + BM25 + reranker | Fusion scoring | LLM | Best general-purpose |
+| **Graph** | Graph traversal + vector | Entity reasoning | LLM | Requires Neo4j |
+| **Agentic** | Multi-step retrieval | Planning + reflection | LLM | Autonomous agent loop |
+| **MemoRAG** | Clue-guided retrieval | Memory → clues | Light + Heavy LLM | Global collection memory |
+| **Corrective** | Vector + grading | Relevance scoring | LLM | Web search fallback |
 
 ## Data Flow
 
@@ -48,35 +51,31 @@ User Query
                 └──────────┘       └──────────────┘     └────────────┘
 ```
 
-Every query generates a pipeline trace (accessible via `GET /traces/{id}`) that records timing and output at each step.
+Every query generates a pipeline trace (accessible via `GET /api/traces/{id}`).
 
 ## Directory Structure
 
 ```
-backend/
-├── app/
-│   ├── main.py                 # App factory with lifespan (init/cleanup)
-│   ├── config.py               # pydantic-settings BaseSettings
-│   ├── api/v1/                 # API routers
-│   │   ├── health.py           # Health checks (Postgres, Redis, Qdrant, Neo4j)
-│   │   ├── query.py            # POST /query, POST /query/stream
-│   │   ├── documents.py        # Document upload and management
-│   │   ├── collections.py      # Vector collection CRUD
-│   │   ├── strategies.py       # GET /strategies
-│   │   ├── traces.py           # Pipeline trace viewer
-│   │   ├── graph.py            # Graph explorer
-│   │   ├── metrics.py          # Quality metrics
-│   │   └── advisor.py          # AI strategy advisor
-│   ├── services/               # Core services
-│   │   ├── embedding.py        # Sentence-transformers embedding
-│   │   ├── llm.py              # LiteLLM wrapper (OpenAI, Anthropic, Ollama)
-│   │   ├── vector_store.py     # Qdrant client
-│   │   ├── graph_store.py      # Neo4j client (optional)
-│   │   ├── cache.py            # Redis cache
-│   │   ├── tracing.py          # Pipeline trace recording
-│   │   ├── document_processor.py  # Parse, chunk, embed pipeline
-│   │   └── evaluation.py       # RAGAS metrics
-│   ├── strategies/             # RAG strategies
+openrag/                        # Python package (5-primitive backend)
+├── __init__.py
+├── config.py                   # pydantic-settings configuration
+├── server.py                   # FastAPI app factory + lifespan + seed
+├── dependencies.py             # Auth dependencies (API key + JWT)
+├── api/                        # API Layer
+│   ├── router.py               # Main router aggregator
+│   └── v1/                     # Versioned endpoints
+│       ├── health.py           # GET /api/health
+│       ├── query.py            # POST /api/query, POST /api/query/stream
+│       ├── documents.py        # Document upload + CRUD
+│       ├── collections.py      # Vector collection management
+│       ├── strategies.py       # GET /api/strategies
+│       ├── traces.py           # Pipeline trace viewer
+│       ├── compare.py          # POST /api/compare
+│       ├── graph.py            # Graph explorer
+│       ├── metrics.py          # Quality metrics
+│       └── advisor.py          # AI strategy advisor
+├── intelligence/               # Primitive 1: Intelligence
+│   ├── strategies/             # 6 RAG strategy implementations
 │   │   ├── base.py             # BaseRAGStrategy (abstract)
 │   │   ├── factory.py          # Strategy registry + factory
 │   │   ├── naive.py            # Simple vector search
@@ -85,103 +84,99 @@ backend/
 │   │   ├── agentic.py          # Multi-step reasoning agent
 │   │   ├── memo_rag.py         # Dual-system memory RAG
 │   │   └── corrective.py       # Document grading + web fallback
-│   ├── models/                 # SQLAlchemy models
-│   ├── schemas/                # Pydantic request/response schemas
-│   ├── middleware/             # Logging, telemetry, tenant isolation
-│   └── workers/                # Celery tasks (document processing)
-├── tests/                      # pytest test suite
-├── alembic/                    # Database migrations
-└── requirements.txt
+│   └── advisor.py              # AI strategy recommendation
+├── engine/                     # Primitive 2: Engine
+│   ├── embedding.py            # Sentence-transformers (MiniLM-L6-v2)
+│   ├── llm.py                  # LiteLLM wrapper (OpenAI, Anthropic, Ollama)
+│   ├── vector_store.py         # Qdrant client
+│   └── graph_store.py          # Neo4j client (optional)
+├── agents/                     # Primitive 3: Agents
+│   ├── evaluator.py            # Quality evaluation agent
+│   └── workers/                # Celery background tasks
+│       └── celery_app.py       # Document processing workers
+├── tools/                      # Primitive 4: Tools & Memory
+│   ├── mcp_server.py           # MCP server (6 tools, stdio transport)
+│   └── cli.py                  # Typer CLI (8 commands)
+├── learning/                   # Primitive 5: Learning
+│   ├── tracing.py              # Pipeline trace recording
+│   ├── evaluation.py           # RAGAS metrics
+│   ├── analytics.py            # Usage analytics
+│   └── feedback.py             # User feedback collection
+├── services/                   # Shared services
+│   ├── cache.py                # Redis cache
+│   └── document_processor.py   # Parse, chunk, embed pipeline
+├── models/                     # SQLAlchemy ORM models
+├── schemas/                    # Pydantic request/response schemas
+└── middleware/                 # Logging, telemetry, tenant isolation
 
-frontend/
+frontend/                       # React 18 + TypeScript + Tailwind CSS
 ├── src/
-│   ├── components/             # React components (TraceViewer, CompareView, etc.)
-│   ├── pages/                  # Page-level components
+│   ├── pages/
+│   │   ├── DashboardPage.tsx   # Command Center (5-primitive cards)
+│   │   ├── IntelligencePage.tsx # AI Advisor + Strategy Catalog
+│   │   ├── ChatPage.tsx        # Query interface with streaming
+│   │   ├── DocumentsPage.tsx   # Document management
+│   │   ├── DebuggerPage.tsx    # Pipeline trace viewer
+│   │   └── ComparePage.tsx     # A/B strategy comparison
+│   ├── components/             # Reusable React components
 │   ├── stores/                 # Zustand state management
 │   ├── hooks/                  # Custom hooks (useStreamQuery)
-│   └── lib/                    # API client, utilities
+│   └── lib/                    # API client, constants, utilities
 └── package.json
 
-cli/
-├── __init__.py
-├── main.py                     # Typer CLI app
-├── commands/                   # Command modules
-└── mcp_server.py               # MCP server (stdio transport)
-
-infra/
-├── prometheus/prometheus.yml
-├── grafana/dashboards/
-├── otel/config.yaml
-└── postgres/init.sql
+seed/                           # Demo documents for first launch
+docs/                           # Documentation
+infra/                          # Infrastructure configs (Prometheus, Grafana, OTel)
+tests/                          # pytest test suite (211 tests)
 ```
+
+## UI Architecture (5-Primitive Mapping)
+
+| Page | Route | Primitive | Purpose |
+|------|-------|-----------|---------|
+| Command Center | `/dashboard` | All 5 | Overview with primitive cards |
+| AI Advisor | `/intelligence` | Intelligence | Strategy recommendation + catalog |
+| Chat | `/chat` | Intelligence | Query with streaming |
+| Compare | `/compare` | Intelligence | A/B strategy testing |
+| Documents | `/documents` | Agents | Document ingest + management |
+| Debugger | `/debugger` | Learning | Pipeline trace analysis |
 
 ## Key Design Decisions
 
 1. **Strategy pattern**: All RAG strategies inherit from `BaseRAGStrategy` and are registered in a factory. The API layer is strategy-agnostic.
 
-2. **Tracing by default**: Every strategy execution records a pipeline trace with step-level timing. This powers the RAG Debugger without any opt-in configuration.
+2. **Tracing by default**: Every strategy execution records a pipeline trace with step-level timing. This powers the RAG Debugger without opt-in.
 
-3. **Graceful degradation**: Neo4j is optional. If unavailable, Graph RAG is disabled but all other strategies work. Redis loss only affects caching.
+3. **Graceful degradation**: Neo4j is optional. If unavailable, Graph RAG is disabled but all other strategies work.
 
-4. **LiteLLM abstraction**: All LLM calls go through LiteLLM, allowing transparent switching between OpenAI, Anthropic, and Ollama with a single config change.
+4. **LiteLLM abstraction**: All LLM calls go through LiteLLM — switch between OpenAI, Anthropic, and Ollama with a config change.
 
-5. **Local embeddings**: Embeddings run locally via sentence-transformers (all-MiniLM-L6-v2, 384 dimensions). No external API calls for embedding, reducing cost and latency.
+5. **Local embeddings**: all-MiniLM-L6-v2 (384 dims, ~80 MB) runs locally. No external API calls for embedding.
 
-6. **Async throughout**: FastAPI + SQLAlchemy async + async Qdrant/Neo4j clients. Celery workers use `asyncio.run()` as a bridge for synchronous task execution.
+6. **Async throughout**: FastAPI + async Qdrant/Neo4j clients. Celery workers bridge to async via `asyncio.run()`.
 
-7. **MCP as first-class interface**: The MCP server exposes the same capabilities as the REST API, making OpenRAG accessible from AI assistants without custom integration code.
+7. **MCP as first-class interface**: The MCP server exposes the same capabilities as the REST API.
 
-## How to Add a New RAG Strategy
+8. **5-Primitive UI**: Dashboard organized around Intelligence/Engine/Agents/Tools/Learning — each card links to its corresponding feature.
 
-1. Create a new file in `backend/app/strategies/`:
+## Adding a New Strategy
+
+1. Create `openrag/intelligence/strategies/my_strategy.py`:
 
 ```python
-from app.strategies.base import BaseRAGStrategy
-
+from openrag.intelligence.strategies.base import BaseRAGStrategy
 
 class MyStrategy(BaseRAGStrategy):
-    """Description of the strategy."""
-
     strategy_id = "my_strategy"
     name = "My Strategy"
-    description = "What this strategy does"
 
     async def retrieve(self, query: str, top_k: int = 5) -> list[dict]:
-        # Implement retrieval logic using self.vector_store, self.graph_store, etc.
         ...
 
     async def generate(self, query: str, context: list[dict]) -> str:
-        # Implement generation logic using self.llm_service
         ...
 ```
 
-2. Register it in `backend/app/strategies/factory.py`:
-
-```python
-from app.strategies.my_strategy import MyStrategy
-
-STRATEGY_REGISTRY = {
-    # ... existing strategies
-    "my_strategy": MyStrategy,
-}
-```
-
-3. Add tests in `backend/tests/test_strategies/test_my_strategy.py`.
-
-The strategy will automatically appear in `GET /strategies` and be available via `POST /query` with `"strategy": "my_strategy"`.
-
-## How to Add a New MCP Tool
-
-1. Define the tool in `cli/mcp_server.py`:
-
-```python
-@server.tool("openrag_my_tool")
-async def my_tool(params: dict) -> str:
-    """Description of what this tool does."""
-    response = await api_client.post("/my-endpoint", json=params)
-    return format_response(response)
-```
-
-2. The tool will be automatically discovered by MCP clients on next connection.
-
-3. Document the tool in `docs/MCP.md` with parameters and usage examples.
+2. Register in `openrag/intelligence/strategies/factory.py`
+3. Add tests in `tests/test_strategies/`
+4. Strategy auto-appears in `GET /api/strategies` and is available via `POST /api/query`

@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">OpenRAG</h1>
-  <p align="center"><strong>Open-source RAG platform with 5-primitive architecture</strong></p>
+  <p align="center"><strong>Open-source RAG platform with 5-primitive architecture: Intelligence · Engine · Agents · Tools · Learning</strong></p>
 </p>
 
 <p align="center">
@@ -40,15 +40,26 @@
 
 Every RAG strategy is a composition of these 5 primitives. Add a new strategy by wiring them differently.
 
+## 5 Primitives
+
+| Primitive | What It Does |
+|-----------|-------------|
+| **Intelligence** | 6 RAG strategies + AI Advisor that auto-recommends the best approach for your data |
+| **Engine** | Embedding runtime (local MiniLM), vector store (Qdrant), LLM inference (LiteLLM) |
+| **Agents** | Background document processing — parse, chunk, embed, index automatically |
+| **Tools & Memory** | MCP server (6 tools), CLI (8 commands), semantic memory via Redis |
+| **Learning** | Pipeline tracing for every query — analyze, debug, and optimize your RAG pipeline |
+
 ## Features
 
-- **6 RAG strategies** -- Naive, Hybrid, Graph, Agentic, MemoRAG, Corrective RAG
+- **6 RAG strategies** -- Simple, Hybrid, Graph, Agentic, MemoRAG, Corrective RAG
+- **AI Strategy Advisor** -- Full-page AI that analyzes your use case and recommends the optimal strategy
 - **Pipeline tracing** -- Full step-by-step trace for every query (RAG Debugger)
 - **A/B Compare** -- Run the same query through multiple strategies side-by-side
+- **SSE streaming** -- Real-time token-by-token response streaming
 - **MCP integration** -- Use OpenRAG as a tool from Claude Desktop or any MCP client
 - **CLI** -- `openrag query`, `openrag compare`, `openrag upload` and more
-- **SSE streaming** -- Real-time token-by-token response streaming
-- **AI Advisor** -- Chatbot that recommends the best strategy for your use case
+- **Self-hosted** -- Your data never leaves your infrastructure
 - **Multi-tenancy** -- Opt-in tenant isolation via JWT claims
 
 ## RAG Strategies
@@ -165,6 +176,7 @@ Full API reference: [docs/API.md](docs/API.md)
 
 ## Documentation
 
+- [Getting Started](docs/GETTING_STARTED.md) -- Installation, first steps, configuration
 - [Architecture](docs/ARCHITECTURE.md) -- 5-primitive design, data flow, extension guide
 - [API Reference](docs/API.md) -- All endpoints with request/response examples
 - [CLI Reference](docs/CLI.md) -- All commands with usage examples
