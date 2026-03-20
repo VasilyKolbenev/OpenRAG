@@ -11,7 +11,7 @@ class TestTracesEndpoint:
 
     async def test_get_trace_not_found(self, client: AsyncClient, app):
         app.state.tracing_service._cache.get_trace.return_value = None
-        response = await client.get("/traces/nonexistent-id")
+        response = await client.get("/api/traces/nonexistent-id")
         assert response.status_code == 404
 
     async def test_get_trace_returns_data(self, client: AsyncClient, app):
@@ -45,7 +45,7 @@ class TestTracesEndpoint:
         }
         app.state.tracing_service._cache.get_trace.return_value = trace_data
 
-        response = await client.get("/traces/test-trace-1")
+        response = await client.get("/api/traces/test-trace-1")
         assert response.status_code == 200
         data = response.json()
         assert data["trace_id"] == "test-trace-1"

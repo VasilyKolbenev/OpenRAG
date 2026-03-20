@@ -22,7 +22,7 @@ class TestHealthEndpoint:
         mock_engine.connect.return_value = mock_ctx
 
         with patch("openrag.models.base.engine", mock_engine):
-            response = await client.get("/health")
+            response = await client.get("/api/health")
 
         assert response.status_code == 200
         data = response.json()
@@ -43,7 +43,7 @@ class TestHealthEndpoint:
         mock_engine.connect.return_value = mock_ctx
 
         with patch("openrag.models.base.engine", mock_engine):
-            response = await client.get("/health")
+            response = await client.get("/api/health")
 
         assert response.status_code == 200
         data = response.json()
@@ -55,7 +55,7 @@ class TestHealthEndpoint:
         mock_engine.connect.side_effect = Exception("connection refused")
 
         with patch("openrag.models.base.engine", mock_engine):
-            response = await client.get("/health")
+            response = await client.get("/api/health")
 
         data = response.json()
         assert data["services"]["database"] == "unhealthy"
@@ -65,6 +65,6 @@ class TestReadinessEndpoint:
     """GET /readyz — kubernetes-style probe."""
 
     async def test_readyz_returns_ready(self, client: AsyncClient):
-        response = await client.get("/readyz")
+        response = await client.get("/api/readyz")
         assert response.status_code == 200
         assert response.json() == {"status": "ready"}

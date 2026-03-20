@@ -39,7 +39,7 @@ Transport: **stdio** (default). The CLI starts the MCP server as a subprocess an
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `openrag_query` | Execute a RAG query | `query` (str), `strategy` (str, optional), `collection` (str, optional), `top_k` (int, optional) |
-| `openrag_upload` | Upload a document | `file_path` (str), `collection` (str, optional) |
+| `openrag_upload` | Upload a text document | `content` (str), `filename` (str), `collection` (str, optional) |
 | `openrag_strategies` | List available RAG strategies | (none) |
 | `openrag_compare` | A/B compare strategies | `query` (str), `strategies` (list[str]), `collection` (str, optional) |
 | `openrag_collections` | List vector collections | (none) |
@@ -70,11 +70,11 @@ Claude will call `openrag_query` with the appropriate parameters and return the 
 
 Claude will call `openrag_compare` and present results from both strategies side-by-side.
 
-### Upload a document
+### Upload a text document
 
-> "Upload the file at /path/to/report.pdf to the research collection"
+> "Upload this markdown content to the research collection"
 
-Claude will call `openrag_upload` to ingest the document.
+Claude will call `openrag_upload` with the text content. Supports text/markdown files. For binary files (PDF, DOCX), use the web UI or CLI upload.
 
 ### Check system status
 

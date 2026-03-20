@@ -13,7 +13,7 @@ class TestQueryEndpoint:
 
     async def test_query_returns_answer_and_sources(self, client: AsyncClient):
         response = await client.post(
-            "/query",
+            "/api/query",
             json={
                 "query": "What is Python?",
                 "strategy": "naive",
@@ -33,7 +33,7 @@ class TestQueryEndpoint:
 
     async def test_query_with_default_strategy(self, client: AsyncClient):
         response = await client.post(
-            "/query",
+            "/api/query",
             json={"query": "Hello world"},
         )
         assert response.status_code == 200
@@ -42,21 +42,21 @@ class TestQueryEndpoint:
 
     async def test_query_validation_empty_query(self, client: AsyncClient):
         response = await client.post(
-            "/query",
+            "/api/query",
             json={"query": ""},
         )
         assert response.status_code == 422  # validation error
 
     async def test_query_validation_invalid_strategy(self, client: AsyncClient):
         response = await client.post(
-            "/query",
+            "/api/query",
             json={"query": "test", "strategy": "nonexistent"},
         )
         assert response.status_code == 422
 
     async def test_query_validation_top_k_out_of_range(self, client: AsyncClient):
         response = await client.post(
-            "/query",
+            "/api/query",
             json={"query": "test", "top_k": 100},
         )
         assert response.status_code == 422
@@ -67,7 +67,7 @@ class TestCompareEndpoint:
 
     async def test_compare_returns_results(self, client: AsyncClient):
         response = await client.post(
-            "/compare",
+            "/api/compare",
             json={
                 "query": "What is Python?",
                 "strategies": ["naive", "hybrid"],
@@ -83,7 +83,7 @@ class TestCompareEndpoint:
 
     async def test_compare_requires_min_two_strategies(self, client: AsyncClient):
         response = await client.post(
-            "/compare",
+            "/api/compare",
             json={
                 "query": "test",
                 "strategies": ["naive"],
@@ -93,7 +93,7 @@ class TestCompareEndpoint:
 
     async def test_compare_max_four_strategies(self, client: AsyncClient):
         response = await client.post(
-            "/compare",
+            "/api/compare",
             json={
                 "query": "test",
                 "strategies": ["naive", "hybrid", "graph", "agentic", "naive"],

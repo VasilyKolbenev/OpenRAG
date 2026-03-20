@@ -218,7 +218,7 @@ def app(
     from openrag.api.router import api_router
 
     test_app = FastAPI()
-    test_app.include_router(api_router)
+    test_app.include_router(api_router, prefix="/api")
 
     # Inject mock services into app.state
     test_app.state.vector_store = mock_vector_store

@@ -14,7 +14,7 @@ class TestDocumentUpload:
 
     async def test_upload_unsupported_type_returns_400(self, client: AsyncClient):
         response = await client.post(
-            "/documents/upload",
+            "/api/documents/upload",
             files={"file": ("test.exe", b"binary", "application/octet-stream")},
         )
         assert response.status_code == 400
@@ -46,7 +46,7 @@ class TestDocumentUpload:
             patch.dict(sys.modules, {"openrag.workers.tasks.ingest": fake_ingest}),
         ):
             response = await client.post(
-                "/documents/upload",
+                "/api/documents/upload",
                 files={"file": ("test.txt", b"Hello world content", "text/plain")},
                 data={"collection": "test"},
             )
@@ -66,7 +66,7 @@ class TestDocumentGet:
     """GET /documents/{doc_id} — status polling."""
 
     async def test_get_document_not_found(self, client: AsyncClient):
-        response = await client.get("/documents/nonexistent-id")
+        response = await client.get("/api/documents/nonexistent-id")
         assert response.status_code == 404
 
     async def test_get_document_returns_cached_status(self, client: AsyncClient, app):
@@ -82,7 +82,7 @@ class TestDocumentGet:
         }
         app.state.cache.get_trace.return_value = doc_data
 
-        response = await client.get("/documents/doc-123")
+        response = await client.get("/api/documents/doc-123")
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == "doc-123"

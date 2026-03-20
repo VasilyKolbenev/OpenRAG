@@ -83,6 +83,7 @@ async def lifespan(app: FastAPI):
             try:
                 from openrag.tools.document_processor import DocumentProcessorService
                 import uuid as _uuid
+                from datetime import datetime, timezone
 
                 processor = DocumentProcessorService(
                     embedding_service=embedding,
@@ -97,15 +98,17 @@ async def lifespan(app: FastAPI):
                         collection="default",
                         metadata={"source": "seed", "filename": doc_file.name},
                     )
-                    # Store doc status in cache so it appears on Documents page
+                    # Store doc status compatible with DocumentDetail schema
                     await cache.store_trace(f"doc_status:{doc_id}", {
                         "id": doc_id,
                         "filename": doc_file.name,
-                        "status": "completed",
+                        "status": "indexed",
                         "chunks": chunks,
                         "collection": "default",
                         "file_size": doc_file.stat().st_size,
-                        "created_at": "seed",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "content_type": "text/markdown",
+                        "metadata": {"source": "seed", "filename": doc_file.name},
                     })
                     logger.info("Seeded: %s (%d chunks)", doc_file.name, chunks)
                 await cache.set("openrag:seeded", "1")
@@ -168,9 +171,9 @@ def create_app() -> FastAPI:
     from openrag.middleware.telemetry import setup_telemetry
     setup_telemetry(app)
 
-    # Routers
+    # Routers — all endpoints under /api prefix
     from openrag.api.router import api_router
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
 
     return app
 

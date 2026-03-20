@@ -59,7 +59,11 @@ async def get_api_key_or_jwt(
             return {"sub": "api_key", "type": "api_key"}
         raise HTTPException(status_code=401, detail="Invalid API key")
     if authorization:
-        return await get_current_user(authorization)
+        user = await get_current_user(authorization)
+        if user is not None:
+            return user
+        # Authorization header present but invalid — always reject
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
     if not settings.is_production:
         return None
     raise HTTPException(status_code=401, detail="Authentication required")

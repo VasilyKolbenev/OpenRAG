@@ -156,36 +156,6 @@ openrag mcp
 
 Uses stdio transport. See [MCP.md](MCP.md) for configuration details.
 
-### `openrag apikey-create`
-
-Generate a new API key.
-
-```bash
-openrag apikey-create --name dev
-openrag apikey-create --name production --expires 90d
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--name` | (required) | Human-readable key name |
-| `--expires` | never | Expiration (e.g., `30d`, `90d`, `1y`) |
-
-### `openrag apikey-list`
-
-List all API keys.
-
-```bash
-openrag apikey-list
-```
-
-### `openrag apikey-revoke`
-
-Revoke an API key.
-
-```bash
-openrag apikey-revoke <key-id>
-```
-
 ## Environment Variables
 
 The CLI respects the following environment variables:

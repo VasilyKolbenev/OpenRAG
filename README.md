@@ -102,11 +102,6 @@ openrag strategies
 # View a pipeline trace
 openrag traces abc-123-def
 
-# Manage API keys
-openrag apikey-create --name dev
-openrag apikey-list
-openrag apikey-revoke <id>
-
 # Start MCP server (for Claude Desktop)
 openrag mcp
 ```

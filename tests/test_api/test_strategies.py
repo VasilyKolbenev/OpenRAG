@@ -10,7 +10,7 @@ class TestStrategiesEndpoint:
     """GET /strategies — list all strategies."""
 
     async def test_list_strategies_returns_all_four(self, client: AsyncClient):
-        response = await client.get("/strategies")
+        response = await client.get("/api/strategies")
         assert response.status_code == 200
         data = response.json()
         assert "strategies" in data
@@ -25,7 +25,7 @@ class TestStrategiesEndpoint:
         assert "corrective" in ids
 
     async def test_strategy_info_has_required_fields(self, client: AsyncClient):
-        response = await client.get("/strategies")
+        response = await client.get("/api/strategies")
         data = response.json()
         for s in data["strategies"]:
             assert "id" in s
@@ -41,7 +41,7 @@ class TestRecommendEndpoint:
 
     async def test_recommend_returns_strategy(self, client: AsyncClient):
         response = await client.post(
-            "/recommend",
+            "/api/recommend",
             json={
                 "domain": "enterprise",
                 "query_complexity": "moderate",

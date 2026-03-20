@@ -26,7 +26,7 @@ class TestAdvisorChat:
             mock_litellm.acompletion = AsyncMock(return_value=mock_response)
 
             response = await client.post(
-                "/advisor/chat",
+                "/api/advisor/chat",
                 json={"message": "Hi, I need help choosing a strategy"},
             )
 
@@ -56,7 +56,7 @@ class TestAdvisorChat:
             mock_litellm.acompletion = AsyncMock(return_value=mock_response)
 
             response = await client.post(
-                "/advisor/chat",
+                "/api/advisor/chat",
                 json={
                     "session_id": "test-session-123",
                     "message": "I work in healthcare",
@@ -92,7 +92,7 @@ class TestAdvisorChat:
             mock_litellm.acompletion = AsyncMock(return_value=mock_response)
 
             response = await client.post(
-                "/advisor/chat",
+                "/api/advisor/chat",
                 json={"message": "I need medical document search with high accuracy"},
             )
 
@@ -111,7 +111,7 @@ class TestAdvisorChat:
             )
 
             response = await client.post(
-                "/advisor/chat",
+                "/api/advisor/chat",
                 json={"message": "Hello"},
             )
 

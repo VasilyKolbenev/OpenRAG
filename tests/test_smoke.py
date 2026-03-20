@@ -149,6 +149,56 @@ class TestAuthContract:
             )
             assert result is None
 
+    @pytest.mark.asyncio
+    async def test_garbage_authorization_header_returns_401(self, app):
+        """Authorization: garbage must not bypass auth."""
+        from fastapi import HTTPException
+        with patch("openrag.dependencies.settings") as mock_settings:
+            mock_settings.is_production = True
+            mock_settings.api_key_master = ""
+
+            from openrag.dependencies import get_api_key_or_jwt
+            with pytest.raises(HTTPException) as exc_info:
+                await get_api_key_or_jwt(
+                    x_api_key=None,
+                    authorization="garbage",
+                )
+            assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_basic_auth_header_returns_401(self, app):
+        """Authorization: Basic xyz must not bypass auth."""
+        from fastapi import HTTPException
+        with patch("openrag.dependencies.settings") as mock_settings:
+            mock_settings.is_production = True
+            mock_settings.api_key_master = ""
+
+            from openrag.dependencies import get_api_key_or_jwt
+            with pytest.raises(HTTPException) as exc_info:
+                await get_api_key_or_jwt(
+                    x_api_key=None,
+                    authorization="Basic dXNlcjpwYXNz",
+                )
+            assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_empty_bearer_token_returns_401(self, app):
+        """Authorization: Bearer <invalid> must return 401."""
+        from fastapi import HTTPException
+        with patch("openrag.dependencies.settings") as mock_settings:
+            mock_settings.is_production = True
+            mock_settings.api_key_master = ""
+            mock_settings.jwt_secret = "test-secret"
+            mock_settings.jwt_algorithm = "HS256"
+
+            from openrag.dependencies import get_api_key_or_jwt
+            with pytest.raises(HTTPException) as exc_info:
+                await get_api_key_or_jwt(
+                    x_api_key=None,
+                    authorization="Bearer invalid-token-here",
+                )
+            assert exc_info.value.status_code == 401
+
 
 # ── Seed Data Contract Tests ─────────────────────────
 
@@ -187,24 +237,24 @@ class TestAPIRoutes:
 
     @pytest.mark.asyncio
     async def test_health_endpoint(self, client):
-        resp = await client.get("/health")
+        resp = await client.get("/api/health")
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
     async def test_strategies_endpoint(self, client):
-        resp = await client.get("/strategies")
+        resp = await client.get("/api/strategies")
         assert resp.status_code == 200
         data = resp.json()
         assert "strategies" in data
 
     @pytest.mark.asyncio
     async def test_collections_endpoint(self, client):
-        resp = await client.get("/collections")
+        resp = await client.get("/api/collections")
         assert resp.status_code == 200
 
     @pytest.mark.asyncio
     async def test_query_endpoint_exists(self, client):
-        resp = await client.post("/query", json={
+        resp = await client.post("/api/query", json={
             "query": "test",
             "strategy": "naive",
             "collection": "default",
