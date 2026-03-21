@@ -101,6 +101,8 @@ async def query_documents(
         # CRAG
         relevance_threshold=request.relevance_threshold,
         web_search_enabled=request.web_search_enabled,
+        # Document filters
+        filters=request.filters,
     )
 
     # Sufficient Context Check

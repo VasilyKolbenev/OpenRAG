@@ -53,6 +53,7 @@ class CorrectiveRAGStrategy(BaseRAGStrategy):
         top_k: int = 10,
         relevance_threshold: float = 0.7,
         web_search_enabled: bool = False,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         """CRAG retrieval: retrieve → grade → decide → refine."""
@@ -69,6 +70,7 @@ class CorrectiveRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=top_k * 2,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(initial_results)}",

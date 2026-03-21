@@ -29,6 +29,7 @@ class GraphRAGStrategy(BaseRAGStrategy):
         top_k: int = 10,
         max_hops: int = 3,
         entity_types: Optional[list[str]] = None,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         # 1. Extract entities from query using LLM
@@ -81,6 +82,7 @@ class GraphRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=top_k,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(vector_results)}",

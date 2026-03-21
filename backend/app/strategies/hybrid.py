@@ -29,6 +29,7 @@ class HybridRAGStrategy(BaseRAGStrategy):
         sparse_weight: float = 0.3,
         enable_reranking: bool = True,
         reranker_type: str = "cross-encoder",
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         fetch_k = top_k * 3  # Over-fetch for fusion
@@ -44,6 +45,7 @@ class HybridRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=fetch_k,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(dense_results)}",

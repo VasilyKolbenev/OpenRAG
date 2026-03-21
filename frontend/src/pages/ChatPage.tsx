@@ -14,6 +14,7 @@ export default function ChatPage() {
     messages,
     selectedStrategy,
     activeCollection,
+    selectedDocumentFilter,
     sessionId,
     addUserMessage,
     addAssistantMessage,
@@ -85,9 +86,10 @@ export default function ChatPage() {
         strategy: selectedStrategy,
         collection: activeCollection,
         session_id: sessionId ?? undefined,
+        filters: selectedDocumentFilter ? { source: selectedDocumentFilter } : undefined,
       });
     },
-    [selectedStrategy, activeCollection, sessionId, addUserMessage, addAssistantMessage, startStream],
+    [selectedStrategy, activeCollection, selectedDocumentFilter, sessionId, addUserMessage, addAssistantMessage, startStream],
   );
 
   return (

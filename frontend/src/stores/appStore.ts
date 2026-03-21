@@ -52,6 +52,10 @@ interface AppState {
   activeCollection: string;
   setActiveCollection: (c: string) => void;
 
+  // Document filter (null = search all documents)
+  selectedDocumentFilter: string | null;
+  setSelectedDocumentFilter: (source: string | null) => void;
+
   // Uploads (global, survives page navigation)
   uploads: Record<string, UploadedFile>;
   addUpload: (file: UploadedFile) => void;
@@ -146,6 +150,10 @@ export const useAppStore = create<AppState>()(
       // Collection
       activeCollection: 'default',
       setActiveCollection: (c) => set({ activeCollection: c }),
+
+      // Document filter
+      selectedDocumentFilter: null,
+      setSelectedDocumentFilter: (source) => set({ selectedDocumentFilter: source }),
 
       // Uploads
       uploads: {},
