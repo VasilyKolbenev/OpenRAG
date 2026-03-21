@@ -63,7 +63,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
         llm_service: LLMService,
         vector_store: QdrantService,
         cache: RedisService,
-        light_model: str = "claude-3-haiku-20240307",
+        light_model: str = "gpt-4o-mini",
     ) -> None:
         super().__init__(
             embedding_service=embedding_service,

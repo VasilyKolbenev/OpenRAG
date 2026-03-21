@@ -252,7 +252,7 @@ export const PIPELINE_CONFIGS: Record<RAGStrategy, PipelineConfigItem[]> = {
     { label: 'Sim Threshold', value: '0.5', type: 'number' },
   ],
   memo: [
-    { label: 'Light Model', value: 'claude-3-haiku', type: 'select' },
+    { label: 'Light Model', value: 'gpt-4o-mini', type: 'select' },
     { label: 'Memory TTL', value: '24h', type: 'select' },
     { label: 'Max Memory Chunks', value: '200', type: 'number' },
     { label: 'Clue Count', value: '3-5', type: 'number' },

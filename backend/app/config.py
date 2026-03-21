@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     default_top_k: int = 10
     default_temperature: float = 0.1
     default_model: str = "gpt-4o"
-    advisor_model: str = "anthropic/claude-3-haiku-20240307"
+    advisor_model: str = "gpt-4o-mini"
     sufficiency_threshold: float = 0.7
     relevance_threshold: float = 0.7
     max_chat_history_messages: int = 20

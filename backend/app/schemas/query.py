@@ -41,7 +41,7 @@ class QueryRequest(BaseModel):
     reranker_type: str = "cross-encoder"  # cross-encoder | colbert
 
     # MemoRAG-specific
-    light_model: str = "claude-3-haiku-20240307"
+    light_model: str = "gpt-4o-mini"
 
     # CRAG-specific
     relevance_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
