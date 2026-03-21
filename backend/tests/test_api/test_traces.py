@@ -41,7 +41,7 @@ class TestTracesEndpoint:
             ],
             "chunks_retrieved": 3,
             "answer_length": 200,
-            "model": "gpt-5.4",
+            "model": "openai/gpt-5.4",
         }
         app.state.tracing_service._cache.get_trace.return_value = trace_data
 

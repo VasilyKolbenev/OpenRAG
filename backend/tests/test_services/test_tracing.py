@@ -48,14 +48,14 @@ class TestTraceRecorder:
         trace.start_step("step1")
         trace.end_step(result_count=5)
 
-        result = trace.to_dict(chunks_retrieved=10, answer_length=200, model="gpt-5.4")
+        result = trace.to_dict(chunks_retrieved=10, answer_length=200, model="openai/gpt-5.4")
         assert result["trace_id"] == trace.trace_id
         assert result["query"] == "test query"
         assert result["strategy"] == "graph"
         assert result["collection"] == "docs"
         assert result["chunks_retrieved"] == 10
         assert result["answer_length"] == 200
-        assert result["model"] == "gpt-5.4"
+        assert result["model"] == "openai/gpt-5.4"
         assert len(result["steps"]) == 1
 
     def test_multiple_steps(self):
@@ -83,7 +83,7 @@ class TestTracingService:
         cache = AsyncMock()
         svc = TracingService(cache=cache)
         trace = TraceRecorder(query="q", strategy="naive", collection="c")
-        await svc.save_trace(trace, chunks_retrieved=5, answer_length=100, model="gpt-5.4")
+        await svc.save_trace(trace, chunks_retrieved=5, answer_length=100, model="openai/gpt-5.4")
         cache.store_trace.assert_called_once()
         call_args = cache.store_trace.call_args
         assert call_args[0][0] == trace.trace_id

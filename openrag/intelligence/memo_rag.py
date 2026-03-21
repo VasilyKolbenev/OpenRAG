@@ -63,7 +63,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
         llm_service: LLMService,
         vector_store: QdrantService,
         cache: RedisService,
-        light_model: str = "gpt-5.4-mini",
+        light_model: str = "openai/gpt-5.4-mini",
     ) -> None:
         super().__init__(
             embedding_service=embedding_service,

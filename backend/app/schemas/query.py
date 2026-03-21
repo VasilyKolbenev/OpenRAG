@@ -23,7 +23,7 @@ class QueryRequest(BaseModel):
     collection: str = "default"
     top_k: int = Field(default=10, ge=1, le=50)
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
-    model: str = "gpt-5.4"
+    model: str = "openai/gpt-5.4"
     filters: Optional[dict] = None
 
     # Agentic-specific
@@ -41,7 +41,7 @@ class QueryRequest(BaseModel):
     reranker_type: str = "cross-encoder"  # cross-encoder | colbert
 
     # MemoRAG-specific
-    light_model: str = "gpt-5.4-mini"
+    light_model: str = "openai/gpt-5.4-mini"
 
     # CRAG-specific
     relevance_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
@@ -85,7 +85,7 @@ class CompareRequest(BaseModel):
     collection: str = "default"
     top_k: int = Field(default=10, ge=1, le=50)
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
-    model: str = "gpt-5.4"
+    model: str = "openai/gpt-5.4"
 
 
 class CompareResult(BaseModel):

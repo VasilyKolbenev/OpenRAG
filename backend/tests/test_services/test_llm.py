@@ -49,8 +49,8 @@ class TestLLMServiceModelResolution:
 
     def test_openai_model_passes_through(self):
         svc = LLMService()
-        assert svc._resolve_model("gpt-5.4") == "gpt-5.4"
-        assert svc._resolve_model("gpt-5.4-mini") == "gpt-5.4-mini"
+        assert svc._resolve_model("openai/gpt-5.4") == "openai/gpt-5.4"
+        assert svc._resolve_model("openai/gpt-5.4-mini") == "openai/gpt-5.4-mini"
 
     def test_anthropic_model_gets_prefix(self):
         svc = LLMService()

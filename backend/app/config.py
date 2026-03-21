@@ -67,8 +67,8 @@ class Settings(BaseSettings):
     # RAG Defaults (C19: extracted magic numbers)
     default_top_k: int = 10
     default_temperature: float = 0.1
-    default_model: str = "gpt-5.4"
-    advisor_model: str = "gpt-5.4-mini"
+    default_model: str = "openai/gpt-5.4"
+    advisor_model: str = "openai/gpt-5.4-mini"
     sufficiency_threshold: float = 0.7
     relevance_threshold: float = 0.7
     max_chat_history_messages: int = 20
