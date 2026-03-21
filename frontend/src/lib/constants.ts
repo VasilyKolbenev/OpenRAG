@@ -226,7 +226,7 @@ export const TABS: TabInfo[] = [
 export const PIPELINE_CONFIGS: Record<RAGStrategy, PipelineConfigItem[]> = {
   agentic: [
     { label: 'Max Iterations', value: '5', type: 'number' },
-    { label: 'Planning Model', value: 'gpt-4o / claude-3.5', type: 'select' },
+    { label: 'Planning Model', value: 'gpt-5.4 / claude-3.5', type: 'select' },
     { label: 'Tool Use', value: true, type: 'toggle' },
     { label: 'Self-Reflection', value: true, type: 'toggle' },
     { label: 'Max Context', value: '128K', type: 'select' },
@@ -252,7 +252,7 @@ export const PIPELINE_CONFIGS: Record<RAGStrategy, PipelineConfigItem[]> = {
     { label: 'Sim Threshold', value: '0.5', type: 'number' },
   ],
   memo: [
-    { label: 'Light Model', value: 'gpt-4o-mini', type: 'select' },
+    { label: 'Light Model', value: 'gpt-5.4-mini', type: 'select' },
     { label: 'Memory TTL', value: '24h', type: 'select' },
     { label: 'Max Memory Chunks', value: '200', type: 'number' },
     { label: 'Clue Count', value: '3-5', type: 'number' },

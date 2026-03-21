@@ -30,7 +30,7 @@ class TestBaseRAGGenerate:
             query="test question",
             context=context,
             trace=trace,
-            model="gpt-4o",
+            model="gpt-5.4",
             temperature=0.1,
         )
 

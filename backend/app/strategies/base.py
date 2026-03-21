@@ -63,7 +63,7 @@ class BaseRAGStrategy(ABC):
         query: str,
         context: list[dict],
         trace: TraceRecorder,
-        model: str = "gpt-4o",
+        model: str = "gpt-5.4",
         temperature: float = 0.1,
         history: Optional[list[dict]] = None,
     ) -> str:
@@ -91,7 +91,7 @@ class BaseRAGStrategy(ABC):
         self,
         query: str,
         context: list[dict],
-        model: str = "gpt-4o",
+        model: str = "gpt-5.4",
         temperature: float = 0.1,
         history: Optional[list[dict]] = None,
     ):
@@ -111,7 +111,7 @@ class BaseRAGStrategy(ABC):
         context: list[dict],
         trace: TraceRecorder,
         threshold: float = 0.5,
-        model: str = "gpt-4o",
+        model: str = "gpt-5.4",
     ) -> tuple[bool, float]:
         """Evaluate whether retrieved context is sufficient to answer the query.
 

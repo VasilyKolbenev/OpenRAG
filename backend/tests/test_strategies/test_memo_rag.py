@@ -28,7 +28,7 @@ def memo_strategy(
         llm_service=mock_llm_service,
         vector_store=mock_vector_store,
         cache=mock_cache_service,
-        light_model="gpt-4o-mini",
+        light_model="gpt-5.4-mini",
     )
 
 

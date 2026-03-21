@@ -36,7 +36,7 @@ Text:
 Response (JSON only):"""
 
 _ENTITY_BATCH_SIZE = 5
-_ENTITY_EXTRACTION_MODEL = "gpt-4o-mini"
+_ENTITY_EXTRACTION_MODEL = "gpt-5.4-mini"
 
 
 class DocumentProcessorService:

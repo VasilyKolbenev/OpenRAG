@@ -157,7 +157,7 @@ class CorrectiveRAGStrategy(BaseRAGStrategy):
 
             prompt = GRADING_PROMPT.format(query=query, documents=docs_text)
             raw = await self.llm.structured_extract(
-                prompt=prompt, model="gpt-4o", temperature=0.0
+                prompt=prompt, model="gpt-5.4", temperature=0.0
             )
 
             grades = self._parse_grades(raw, len(batch))
