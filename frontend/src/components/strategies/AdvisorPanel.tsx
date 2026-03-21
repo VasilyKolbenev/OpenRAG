@@ -68,7 +68,7 @@ export default function AdvisorPanel({ onComplete }: AdvisorPanelProps) {
     return (
       <div className="animate-fade-slide-up">
         <h3 className="text-[16px] text-serpent-text-secondary mb-5 font-outfit flex items-center gap-2">
-          <span className="text-[18px]">{'\uD83D\uDC0D'}</span> Serpent's Recommendation
+          <span className="text-[18px]">{'\u2728'}</span> AI Recommendation
         </h3>
 
         {result.map((r, i) => (

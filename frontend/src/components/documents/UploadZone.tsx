@@ -227,12 +227,12 @@ export default function UploadZone() {
         className="rounded-[10px] p-7 text-center cursor-pointer transition-all duration-300"
         style={{
           border: `1.5px dashed ${dragging ? '#C8F547' : '#1e1e1e'}`,
-          background: dragging ? '#C8F54704' : '#080808',
+          background: dragging ? '#C8F54704' : '#0f1117',
         }}
       >
-        <div className="text-[28px] mb-2.5 opacity-50">{'\uD83D\uDC0D'}</div>
+        <div className="text-[28px] mb-2.5 opacity-50">{'\uD83D\uDCC1'}</div>
         <p className="text-xs text-serpent-text-muted mb-[3px] font-dm-sans">
-          Drop files here to feed the Serpent
+          Drop files here to index
         </p>
         <p className="text-[10px] text-serpent-text-darker font-mono">
           PDF {'\u00B7'} DOCX {'\u00B7'} TXT {'\u00B7'} MD {'\u00B7'} CSV{' '}

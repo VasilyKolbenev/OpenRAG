@@ -54,11 +54,12 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // keep as text
     }
     throw new ApiError(res.status, res.statusText, body);
   }
@@ -93,11 +94,12 @@ export async function queryStream(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // keep as text
     }
     throw new ApiError(res.status, res.statusText, body);
   }
@@ -135,11 +137,12 @@ export async function uploadDocument(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // keep as text
     }
     throw new ApiError(res.status, res.statusText, body);
   }
