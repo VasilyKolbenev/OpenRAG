@@ -11,7 +11,7 @@ import redis.asyncio as aioredis
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.cache")
+logger = logging.getLogger("openrag.cache")
 
 
 class RedisService:
@@ -60,7 +60,7 @@ class RedisService:
 
     async def invalidate_collection_cache(self, collection: str) -> None:
         """Invalidate all cached queries for a collection."""
-        pattern = f"serpent:query:*:{collection}:*"
+        pattern = f"openrag:query:*:{collection}:*"
         async for key in self._client.scan_iter(match=pattern, count=100):
             await self._client.delete(key)
 
@@ -68,12 +68,12 @@ class RedisService:
 
     async def store_trace(self, trace_id: str, trace_data: dict, ttl: int = 86400) -> None:
         """Store pipeline trace in Redis (24h TTL)."""
-        key = f"serpent:trace:{trace_id}"
+        key = f"openrag:trace:{trace_id}"
         await self._client.setex(key, ttl, json.dumps(trace_data, default=str))
 
     async def get_trace(self, trace_id: str) -> Optional[dict]:
         """Get pipeline trace from Redis."""
-        key = f"serpent:trace:{trace_id}"
+        key = f"openrag:trace:{trace_id}"
         data = await self._client.get(key)
         if data:
             return json.loads(data)
@@ -100,14 +100,14 @@ class RedisService:
 
     async def get_memo_memory(self, collection: str) -> Optional[str]:
         """Get cached collection memory for MemoRAG."""
-        key = f"serpent:memo:{collection}:memory"
+        key = f"openrag:memo:{collection}:memory"
         return await self._client.get(key)
 
     async def set_memo_memory(
         self, collection: str, memory: str, ttl: int = 86400
     ) -> None:
         """Cache collection memory for MemoRAG (24h TTL)."""
-        key = f"serpent:memo:{collection}:memory"
+        key = f"openrag:memo:{collection}:memory"
         await self._client.setex(key, ttl, memory)
 
     # ── Advisor Sessions ──
@@ -116,7 +116,7 @@ class RedisService:
         self, user_id: str, session_id: str
     ) -> Optional[list[dict]]:
         """Get advisor chatbot conversation history (scoped by user)."""
-        key = f"serpent:advisor:{user_id}:{session_id}"
+        key = f"openrag:advisor:{user_id}:{session_id}"
         data = await self._client.get(key)
         if data:
             return json.loads(data)
@@ -126,7 +126,7 @@ class RedisService:
         self, user_id: str, session_id: str, history: list[dict], ttl: int = 3600
     ) -> None:
         """Save advisor chatbot conversation history (1h TTL, scoped by user)."""
-        key = f"serpent:advisor:{user_id}:{session_id}"
+        key = f"openrag:advisor:{user_id}:{session_id}"
         await self._client.setex(key, ttl, json.dumps(history))
 
     # ── Chat Sessions ──
@@ -135,7 +135,7 @@ class RedisService:
         self, user_id: str, session_id: str
     ) -> Optional[list[dict]]:
         """Get chat conversation history for a user session."""
-        key = f"serpent:chat:{user_id}:{session_id}"
+        key = f"openrag:chat:{user_id}:{session_id}"
         data = await self._client.get(key)
         if data:
             return json.loads(data)
@@ -149,18 +149,18 @@ class RedisService:
         ttl: int = 14400,
     ) -> None:
         """Save chat conversation history (4h TTL)."""
-        key = f"serpent:chat:{user_id}:{session_id}"
+        key = f"openrag:chat:{user_id}:{session_id}"
         await self._client.setex(key, ttl, json.dumps(history))
 
     async def delete_chat_session(self, user_id: str, session_id: str) -> bool:
         """Delete a chat session. Returns True if key existed."""
-        key = f"serpent:chat:{user_id}:{session_id}"
+        key = f"openrag:chat:{user_id}:{session_id}"
         deleted = await self._client.delete(key)
         return deleted > 0
 
     async def list_chat_sessions(self, user_id: str) -> list[dict]:
         """List all active chat sessions for a user via SCAN."""
-        pattern = f"serpent:chat:{user_id}:*"
+        pattern = f"openrag:chat:{user_id}:*"
         sessions: list[dict] = []
 
         async for key in self._client.scan_iter(match=pattern, count=100):
@@ -175,7 +175,7 @@ class RedisService:
 
     async def get_file_hash(self, collection: str, file_hash: str) -> Optional[str]:
         """Get existing doc_id for a file content hash. Returns None if new."""
-        key = f"serpent:file_hash:{collection}:{file_hash}"
+        key = f"openrag:file_hash:{collection}:{file_hash}"
         return await self._client.get(key)
 
     async def set_file_hash(
@@ -189,13 +189,13 @@ class RedisService:
         Returns:
             True if set (new hash), False if already existed (concurrent upload).
         """
-        key = f"serpent:file_hash:{collection}:{file_hash}"
+        key = f"openrag:file_hash:{collection}:{file_hash}"
         result = await self._client.set(key, doc_id, ex=ttl, nx=True)
         return result is not None
 
     async def delete_file_hash(self, collection: str, file_hash: str) -> None:
         """Remove file hash mapping (called on document deletion)."""
-        key = f"serpent:file_hash:{collection}:{file_hash}"
+        key = f"openrag:file_hash:{collection}:{file_hash}"
         await self._client.delete(key)
 
     # ── Document Status ──
@@ -204,7 +204,7 @@ class RedisService:
         self, collection: str | None = None
     ) -> list[dict]:
         """List all document statuses from Redis via SCAN."""
-        pattern = "serpent:trace:doc_status:*"
+        pattern = "openrag:trace:doc_status:*"
         documents: list[dict] = []
 
         async for key in self._client.scan_iter(match=pattern, count=100):
@@ -219,7 +219,7 @@ class RedisService:
 
     async def delete_doc_status(self, doc_id: str) -> bool:
         """Delete a document status key from Redis. Returns True if key existed."""
-        key = f"serpent:trace:doc_status:{doc_id}"
+        key = f"openrag:trace:doc_status:{doc_id}"
         deleted = await self._client.delete(key)
         return deleted > 0
 
@@ -237,9 +237,9 @@ class RedisService:
     @staticmethod
     def _query_key(query: str, strategy: str, collection: str) -> str:
         query_hash = hashlib.sha256(query.encode()).hexdigest()[:16]
-        return f"serpent:query:{strategy}:{collection}:{query_hash}"
+        return f"openrag:query:{strategy}:{collection}:{query_hash}"
 
     @staticmethod
     def _embedding_key(text: str) -> str:
         text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
-        return f"serpent:embed:{text_hash}"
+        return f"openrag:embed:{text_hash}"

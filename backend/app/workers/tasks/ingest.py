@@ -17,7 +17,7 @@ import redis
 from app.config import settings
 from app.workers.celery_app import celery_app
 
-logger = logging.getLogger("serpent.worker.ingest")
+logger = logging.getLogger("openrag.worker.ingest")
 
 
 def _get_redis():
@@ -28,7 +28,7 @@ def _get_redis():
 def _update_doc_status(doc_id: str, status_data: dict) -> None:
     """Update document processing status in Redis."""
     r = _get_redis()
-    key = f"serpent:trace:doc_status:{doc_id}"
+    key = f"openrag:trace:doc_status:{doc_id}"
     r.setex(key, 86400, json.dumps(status_data, default=str))
 
 

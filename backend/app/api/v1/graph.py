@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, Request
 
-logger = logging.getLogger("serpent.api.graph")
+logger = logging.getLogger("openrag.api.graph")
 
 router = APIRouter(tags=["graph"])
 

@@ -24,7 +24,7 @@ from app.schemas.query import (
 
 from app.config import settings as app_settings
 
-logger = logging.getLogger("serpent.query")
+logger = logging.getLogger("openrag.query")
 
 router = APIRouter(tags=["query"])
 

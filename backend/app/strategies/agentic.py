@@ -11,7 +11,7 @@ from app.services.graph_store import Neo4jService
 from app.services.tracing import TraceRecorder
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.agentic")
+logger = logging.getLogger("openrag.agentic")
 
 
 class AgenticRAGStrategy(BaseRAGStrategy):

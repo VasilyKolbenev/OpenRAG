@@ -12,7 +12,7 @@ import litellm
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.llm")
+logger = logging.getLogger("openrag.llm")
 
 # Configure LiteLLM
 litellm.drop_params = True

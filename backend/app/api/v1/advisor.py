@@ -17,12 +17,12 @@ from app.config import settings
 from app.dependencies import require_auth_in_production
 from app.schemas.query import RAGStrategy
 
-logger = logging.getLogger("serpent.advisor")
+logger = logging.getLogger("openrag.advisor")
 
 router = APIRouter(tags=["advisor"])
 
-ADVISOR_SYSTEM_PROMPT = """You are Serpent, a friendly and knowledgeable AI advisor for the \
-SerpentRAG platform. Your role is to help users choose the best RAG strategy and configuration \
+ADVISOR_SYSTEM_PROMPT = """You are an AI strategy advisor for the OpenRAG platform. \
+Your role is to help users choose the best RAG strategy and configuration \
 for their use case through a conversational interview.
 
 CHECKLIST (gather this information naturally through conversation):

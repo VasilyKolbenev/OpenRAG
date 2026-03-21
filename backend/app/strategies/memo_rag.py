@@ -18,7 +18,7 @@ from app.services.tracing import TraceRecorder
 from app.services.vector_store import QdrantService
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.memo_rag")
+logger = logging.getLogger("openrag.memo_rag")
 
 MEMORY_BUILD_PROMPT = """You are a knowledge analyst. Given the following document chunks from a
 collection, create a comprehensive global memory summary that captures:

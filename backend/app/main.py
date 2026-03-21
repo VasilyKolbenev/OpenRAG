@@ -1,5 +1,5 @@
 """
-SERPENT RAG PLATFORM — Application Factory
+OPENRAG PLATFORM — Application Factory
 FastAPI application with multi-strategy RAG support.
 """
 
@@ -15,14 +15,14 @@ from app.config import settings
 from app.middleware.logging import RequestLoggingMiddleware, setup_logging
 from app.middleware.rate_limit import RateLimitMiddleware
 
-logger = logging.getLogger("serpent")
+logger = logging.getLogger("openrag")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle — initialize and cleanup services."""
     setup_logging()
-    logger.info("Starting Serpent RAG Platform...")
+    logger.info("Starting OpenRAG Platform...")
 
     # Initialize services
     from app.services.cache import RedisService
@@ -78,7 +78,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Cleanup
-    logger.info("Shutting down Serpent RAG Platform...")
+    logger.info("Shutting down OpenRAG Platform...")
     await vector_store.close()
     await graph_store.close()
     await cache.close()
@@ -89,7 +89,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
-        title="Serpent RAG Platform",
+        title="OpenRAG",
         description="Universal self-hosted RAG platform with Agentic, Graph, Hybrid, and Simple strategies",
         version="1.0.0",
         lifespan=lifespan,

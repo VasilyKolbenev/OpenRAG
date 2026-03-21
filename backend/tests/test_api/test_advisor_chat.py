@@ -21,7 +21,7 @@ class TestAdvisorChat:
         with patch("app.api.v1.advisor.litellm") as mock_litellm:
             mock_response = MagicMock()
             mock_response.choices = [
-                MagicMock(message=MagicMock(content="Hello! I'm Serpent. What domain?"))
+                MagicMock(message=MagicMock(content="Hello! I'm your AI advisor. What domain?"))
             ]
             mock_litellm.acompletion = AsyncMock(return_value=mock_response)
 

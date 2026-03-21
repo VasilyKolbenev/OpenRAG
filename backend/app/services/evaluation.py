@@ -5,7 +5,7 @@ RAG evaluation service using RAGAS metrics.
 import logging
 from typing import Optional
 
-logger = logging.getLogger("serpent.evaluation")
+logger = logging.getLogger("openrag.evaluation")
 
 
 class EvaluationService:

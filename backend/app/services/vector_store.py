@@ -17,7 +17,7 @@ from qdrant_client.http.models import (
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.vector_store")
+logger = logging.getLogger("openrag.vector_store")
 
 
 class SearchResult:

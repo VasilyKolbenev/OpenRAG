@@ -15,7 +15,7 @@ from app.config import settings
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import QdrantService
 
-logger = logging.getLogger("serpent.document_processor")
+logger = logging.getLogger("openrag.document_processor")
 
 _ENTITY_EXTRACTION_PROMPT = """Extract named entities and relationships from the following text.
 Return a JSON object with two arrays:

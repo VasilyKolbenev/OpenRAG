@@ -11,7 +11,7 @@ import numpy as np
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.embedding")
+logger = logging.getLogger("openrag.embedding")
 
 
 class EmbeddingService:

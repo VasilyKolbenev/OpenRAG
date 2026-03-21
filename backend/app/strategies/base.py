@@ -12,7 +12,7 @@ from app.services.llm import LLMService
 from app.services.tracing import TraceRecorder
 from app.services.vector_store import QdrantService
 
-logger = logging.getLogger("serpent.base_strategy")
+logger = logging.getLogger("openrag.base_strategy")
 
 SUFFICIENCY_PROMPT = """You are a context evaluator. Given a user query and retrieved context,
 assess whether the context contains sufficient information to answer the query confidently.

@@ -22,7 +22,7 @@ from app.schemas.document import (
     DocumentResponse,
 )
 
-logger = logging.getLogger("serpent.api.documents")
+logger = logging.getLogger("openrag.api.documents")
 
 router = APIRouter(tags=["documents"])
 

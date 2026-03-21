@@ -15,7 +15,7 @@ class TestRedisServiceKeys:
         k1 = RedisService._query_key("hello", "naive", "default")
         k2 = RedisService._query_key("hello", "naive", "default")
         assert k1 == k2
-        assert k1.startswith("serpent:query:naive:default:")
+        assert k1.startswith("openrag:query:naive:default:")
 
     def test_query_key_differs_by_strategy(self):
         k1 = RedisService._query_key("hello", "naive", "default")
@@ -31,7 +31,7 @@ class TestRedisServiceKeys:
         k1 = RedisService._embedding_key("some text")
         k2 = RedisService._embedding_key("some text")
         assert k1 == k2
-        assert k1.startswith("serpent:embed:")
+        assert k1.startswith("openrag:embed:")
 
     def test_embedding_key_differs_by_text(self):
         k1 = RedisService._embedding_key("text a")
@@ -71,7 +71,7 @@ class TestRedisServiceOperations:
         await svc.store_trace("trace-123", {"data": "test"}, ttl=3600)
         svc._client.setex.assert_called_once()
         key = svc._client.setex.call_args[0][0]
-        assert key == "serpent:trace:trace-123"
+        assert key == "openrag:trace:trace-123"
 
     async def test_get_trace_returns_parsed_json(self):
         svc = RedisService()
@@ -126,7 +126,7 @@ class TestRedisServiceOperations:
         svc = RedisService()
         mock_client = AsyncMock()
         mock_client.scan_iter = lambda **kwargs: AsyncIterator(
-            ["serpent:query:naive:test:abc"]
+            ["openrag:query:naive:test:abc"]
         )
         mock_client.delete = AsyncMock()
         svc._client = mock_client

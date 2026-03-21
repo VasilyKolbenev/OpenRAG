@@ -18,7 +18,7 @@ from app.config import settings
 from app.services.tracing import TraceRecorder
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.corrective")
+logger = logging.getLogger("openrag.corrective")
 
 GRADING_PROMPT = """You are a relevance grader. For each document, score its relevance to the query
 on a scale of 0.0 to 1.0, where 1.0 means perfectly relevant and 0.0 means completely irrelevant.

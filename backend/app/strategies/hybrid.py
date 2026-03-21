@@ -12,7 +12,7 @@ from rank_bm25 import BM25Okapi
 from app.services.tracing import TraceRecorder
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.hybrid")
+logger = logging.getLogger("openrag.hybrid")
 
 
 class HybridRAGStrategy(BaseRAGStrategy):

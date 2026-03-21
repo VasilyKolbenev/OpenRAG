@@ -21,7 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-logger = logging.getLogger("serpent.rate_limit")
+logger = logging.getLogger("openrag.rate_limit")
 
 # path prefix → (max_requests, window_seconds)
 RATE_LIMITS: dict[str, tuple[int, int]] = {

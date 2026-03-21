@@ -9,7 +9,7 @@ from neo4j import AsyncGraphDatabase, AsyncDriver
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.graph_store")
+logger = logging.getLogger("openrag.graph_store")
 
 
 class GraphNode:
