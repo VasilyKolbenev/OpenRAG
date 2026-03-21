@@ -243,6 +243,7 @@ async def query_stream(
             )
 
             # Phase 1: Retrieval (use rewritten query)
+            logger.info("Stream query: filters=%s, strategy=%s", request.filters, request.strategy)
             yield {
                 "event": "status",
                 "data": json.dumps({"phase": "retrieving"}),
