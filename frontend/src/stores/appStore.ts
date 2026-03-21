@@ -11,6 +11,16 @@ import { generateId } from '@/lib/utils';
 
 type HealthStatus = 'healthy' | 'degraded' | 'offline';
 
+const MAX_CHAT_SESSIONS = 20;
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  strategy: RAGStrategy;
+  createdAt: number;
+}
+
 export interface UploadedFile {
   id: string;
   name: string;
@@ -47,6 +57,12 @@ interface AppState {
   sessionId: string | null;
   setSessionId: (id: string) => void;
   clearSession: () => void;
+
+  // Chat history
+  chatSessions: ChatSession[];
+  activeChatId: string | null;
+  loadChatSession: (id: string) => void;
+  deleteChatSession: (id: string) => void;
 
   // Collection
   activeCollection: string;
@@ -140,11 +156,55 @@ export const useAppStore = create<AppState>()(
       sessionId: null,
       setSessionId: (id) => set({ sessionId: id }),
       clearSession: () => {
-        const { selectedStrategy } = get();
+        const { messages, selectedStrategy, chatSessions, activeChatId } = get();
+        const userMessages = messages.filter((m) => m.role === 'user');
+        if (userMessages.length > 0 && !activeChatId) {
+          const title =
+            userMessages[0].content.length > 40
+              ? userMessages[0].content.slice(0, 40) + '...'
+              : userMessages[0].content;
+          const session: ChatSession = {
+            id: generateId(),
+            title,
+            messages: [...messages],
+            strategy: selectedStrategy,
+            createdAt: Date.now(),
+          };
+          const updated = [session, ...chatSessions].slice(0, MAX_CHAT_SESSIONS);
+          set({
+            sessionId: null,
+            activeChatId: null,
+            messages: [WELCOME_MESSAGE(selectedStrategy)],
+            chatSessions: updated,
+          });
+        } else {
+          set({
+            sessionId: null,
+            activeChatId: null,
+            messages: [WELCOME_MESSAGE(selectedStrategy)],
+          });
+        }
+      },
+
+      // Chat history
+      chatSessions: [],
+      activeChatId: null,
+      loadChatSession: (id) => {
+        const { chatSessions } = get();
+        const session = chatSessions.find((s) => s.id === id);
+        if (!session) return;
         set({
+          messages: [...session.messages],
+          selectedStrategy: session.strategy,
+          activeChatId: session.id,
           sessionId: null,
-          messages: [WELCOME_MESSAGE(selectedStrategy)],
         });
+      },
+      deleteChatSession: (id) => {
+        set((s) => ({
+          chatSessions: s.chatSessions.filter((c) => c.id !== id),
+          activeChatId: s.activeChatId === id ? null : s.activeChatId,
+        }));
       },
 
       // Collection
@@ -196,6 +256,8 @@ export const useAppStore = create<AppState>()(
         sessionId: state.sessionId,
         messages: state.messages.slice(-50), // Keep last 50 messages max
         selectedStrategy: state.selectedStrategy,
+        chatSessions: state.chatSessions.slice(0, MAX_CHAT_SESSIONS),
+        activeChatId: state.activeChatId,
       }),
     },
   ),

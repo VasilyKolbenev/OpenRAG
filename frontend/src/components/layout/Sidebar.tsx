@@ -6,6 +6,8 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import OpenRAGLogo from './OpenRAGLogo';
 import { useAppStore } from '@/stores/appStore';
+import { STRATEGY_COLORS } from '@/lib/constants';
+import type { RAGStrategy } from '@/types/api';
 
 interface NavItem {
   label: string;
@@ -109,11 +111,28 @@ const HEALTH_CONFIG = {
   offline: { color: '#ef4444', label: 'Services offline' },
 } as const;
 
+function formatRelativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const healthStatus = useAppStore((s) => s.healthStatus);
+  const chatSessions = useAppStore((s) => s.chatSessions);
+  const activeChatId = useAppStore((s) => s.activeChatId);
+  const loadChatSession = useAppStore((s) => s.loadChatSession);
+  const deleteChatSession = useAppStore((s) => s.deleteChatSession);
   const health = HEALTH_CONFIG[healthStatus];
+  const recentSessions = chatSessions.slice(0, 10);
 
   return (
     <aside
@@ -191,6 +210,80 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Recent Chats */}
+      {recentSessions.length > 0 && (
+        <div className="px-3 shrink-0">
+          <div className="mx-1" style={{ height: 1, backgroundColor: '#1e2230' }} />
+          <p
+            className="px-3 mt-3 mb-1 text-[10px] font-semibold uppercase tracking-widest"
+            style={{ color: '#71717a90' }}
+          >
+            Recent Chats
+          </p>
+          <div className="max-h-[180px] overflow-y-auto space-y-0.5">
+            {recentSessions.map((session) => {
+              const isActive = activeChatId === session.id;
+              const dotColor = STRATEGY_COLORS[session.strategy as RAGStrategy] ?? '#888';
+              return (
+                <div
+                  key={session.id}
+                  className="group relative flex items-center gap-2 rounded-md px-3 py-1.5 cursor-pointer transition-colors duration-150"
+                  style={{
+                    backgroundColor: isActive ? '#1c1f2b' : 'transparent',
+                  }}
+                  onClick={() => {
+                    loadChatSession(session.id);
+                    navigate('/chat');
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = '#161922';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <span
+                    className="inline-block shrink-0 rounded-full"
+                    style={{ width: 5, height: 5, backgroundColor: dotColor }}
+                  />
+                  <span
+                    className="flex-1 text-[11px] font-medium truncate"
+                    style={{ color: isActive ? '#eeeef0' : '#71717a' }}
+                  >
+                    {session.title}
+                  </span>
+                  <span
+                    className="text-[9px] shrink-0 group-hover:hidden"
+                    style={{ color: '#52525b' }}
+                  >
+                    {formatRelativeTime(session.createdAt)}
+                  </span>
+                  <button
+                    className="hidden group-hover:flex items-center justify-center shrink-0 rounded p-0.5 transition-colors"
+                    style={{ color: '#52525b' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteChatSession(session.id);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#ef4444';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#52525b';
+                    }}
+                    title="Delete chat"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4M12.667 4v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Health status */}
       <div className="px-5 pb-4 pt-2 shrink-0">
