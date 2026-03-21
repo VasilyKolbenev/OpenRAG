@@ -77,7 +77,123 @@ export default function IntelligencePage() {
           </div>
         </div>
       </div>
+
+      {/* Model Providers */}
+      <ModelProviders />
     </div>
+  );
+}
+
+/* ── Model Providers Section ─────────────────────── */
+
+interface ProviderInfo {
+  name: string;
+  emoji: string;
+  type: 'Cloud' | 'Self-hosted';
+  status: string;
+  statusColor: string;
+  dotColor: string;
+  models: string[];
+}
+
+const PROVIDERS: ProviderInfo[] = [
+  {
+    name: 'OpenAI',
+    emoji: '\u2B50',
+    type: 'Cloud',
+    status: 'Connected',
+    statusColor: 'text-green-400',
+    dotColor: '#22c55e',
+    models: ['GPT-5.4', 'GPT-5.4-mini'],
+  },
+  {
+    name: 'Anthropic',
+    emoji: '\uD83E\uDDE1',
+    type: 'Cloud',
+    status: 'API Key Required',
+    statusColor: 'text-yellow-400',
+    dotColor: '#eab308',
+    models: ['Claude 4.5 Sonnet', 'Claude 4.5 Haiku'],
+  },
+  {
+    name: 'Ollama',
+    emoji: '\uD83E\uDD99',
+    type: 'Self-hosted',
+    status: 'Configure Endpoint',
+    statusColor: 'text-zinc-400',
+    dotColor: '#71717a',
+    models: ['Llama 3.2', 'Mistral', 'Qwen'],
+  },
+  {
+    name: 'vLLM / SGLang',
+    emoji: '\u26A1',
+    type: 'Self-hosted',
+    status: 'Configure Endpoint',
+    statusColor: 'text-zinc-400',
+    dotColor: '#71717a',
+    models: ['Any HuggingFace model'],
+  },
+];
+
+function ModelProviders() {
+  return (
+    <section className="mt-8">
+      <h2 className="text-sm font-medium text-serpent-text-secondary uppercase tracking-wider mb-4">
+        Model Providers
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {PROVIDERS.map((p) => (
+          <div
+            key={p.name}
+            className="rounded-xl border border-serpent-border-light bg-serpent-surface p-4 flex flex-col gap-3"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">{p.emoji}</span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-serpent-text truncate">
+                  {p.name}
+                </h3>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-serpent-surface-active text-serpent-text-dim">
+                  {p.type}
+                </span>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: p.dotColor }}
+              />
+              <span className={`text-xs font-medium ${p.statusColor}`}>
+                {p.status}
+              </span>
+            </div>
+
+            {/* Models */}
+            <div className="flex flex-wrap gap-1">
+              {p.models.map((m) => (
+                <span
+                  key={m}
+                  className="text-[10px] px-2 py-0.5 rounded-full border border-serpent-border-light text-serpent-text-dim"
+                >
+                  {m}
+                </span>
+              ))}
+            </div>
+
+            {/* Configure Button */}
+            <button
+              disabled
+              className="mt-auto text-xs font-medium px-3 py-1.5 rounded-md border border-serpent-border-light text-serpent-text-dim opacity-40 cursor-not-allowed"
+            >
+              Configure
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
