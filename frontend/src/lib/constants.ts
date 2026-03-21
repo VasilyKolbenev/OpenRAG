@@ -275,7 +275,6 @@ export const DEFAULT_QUERY_PARAMS = {
   collection: 'default',
   top_k: 10,
   temperature: 0.1,
-  model: 'gpt-4o',
 } as const;
 
 // ── Health Polling ─────────────────────────────────

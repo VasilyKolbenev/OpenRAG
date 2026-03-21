@@ -16,7 +16,7 @@ export interface QueryRequest {
   collection: string;
   top_k: number;
   temperature: number;
-  model: string;
+  model?: string;
   filters?: Record<string, unknown>;
   // Agentic-specific
   max_iterations?: number;
@@ -128,7 +128,7 @@ export interface CompareRequest {
   collection: string;
   top_k: number;
   temperature: number;
-  model: string;
+  model?: string;
 }
 
 export interface CompareResult {

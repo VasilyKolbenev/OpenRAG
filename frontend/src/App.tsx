@@ -9,6 +9,7 @@ import DebuggerPage from '@/pages/DebuggerPage';
 import ComparePage from '@/pages/ComparePage';
 import DocumentsPage from '@/pages/DocumentsPage';
 import IntelligencePage from '@/pages/IntelligencePage';
+import { AdvisorChatbot } from '@/components/advisor/AdvisorChatbot';
 import { useAppStore } from '@/stores/appStore';
 import { api } from '@/lib/api';
 import { HEALTH_POLL_INTERVAL } from '@/lib/constants';
@@ -59,6 +60,7 @@ function AppShell() {
           </Routes>
         </ErrorBoundary>
       </main>
+      <AdvisorChatbot />
     </div>
   );
 }

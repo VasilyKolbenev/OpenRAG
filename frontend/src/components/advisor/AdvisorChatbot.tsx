@@ -60,7 +60,7 @@ export function AdvisorChatbot() {
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[400px] h-[500px] bg-[#1A1B23] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed bottom-24 right-6 z-50 w-[90vw] md:w-[400px] h-[500px] bg-[#161922] border border-[#252a3a] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-[#C8F547]/10 to-[#2DD4A8]/10 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-2">

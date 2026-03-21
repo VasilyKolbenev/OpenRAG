@@ -29,8 +29,8 @@ export default function ChatMessage({ msg }: ChatMessageProps) {
           borderRadius: isUser
             ? '12px 12px 3px 12px'
             : '12px 12px 12px 3px',
-          background: isUser ? '#C8F54708' : '#0e0e0e',
-          border: `1px solid ${isUser ? '#C8F54715' : '#181818'}`,
+          background: isUser ? '#C8F54708' : '#161922',
+          border: `1px solid ${isUser ? '#C8F54715' : '#252a3a'}`,
         }}
       >
         {/* Sources */}
