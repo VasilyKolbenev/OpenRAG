@@ -264,6 +264,7 @@ async def query_stream(
                 light_model=request.light_model,
                 relevance_threshold=request.relevance_threshold,
                 web_search_enabled=request.web_search_enabled,
+                filters=request.filters,
             )
 
             # Phase 2: Sources
