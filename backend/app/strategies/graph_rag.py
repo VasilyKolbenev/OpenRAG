@@ -32,6 +32,14 @@ class GraphRAGStrategy(BaseRAGStrategy):
         filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
+        # Check if graph store is available
+        if not await self._graph_available():
+            raise ValueError(
+                "Graph RAG requires Neo4j which is currently offline. "
+                "Please use a different strategy (Hybrid, Simple, or Agentic) "
+                "or start Neo4j and try again."
+            )
+
         # 1. Extract entities from query using LLM
         trace.start_step("entity_extraction", input_summary=f"query_length={len(query)}")
         entities = await self._extract_entities(query)
@@ -159,3 +167,10 @@ class GraphRAGStrategy(BaseRAGStrategy):
                 merged.append(item)
 
         return merged[:limit]
+
+    async def _graph_available(self) -> bool:
+        """Check if Neo4j graph store is reachable."""
+        try:
+            return await self.graph_store.health_check()
+        except Exception:
+            return False
