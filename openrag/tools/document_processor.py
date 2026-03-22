@@ -54,8 +54,8 @@ class DocumentProcessorService:
         self._graph_store = graph_store
         self._llm_service = llm_service
         self._splitter = RecursiveCharacterTextSplitter(
-            chunk_size=512,
-            chunk_overlap=128,
+            chunk_size=1024,
+            chunk_overlap=200,
             length_function=len,
             separators=["\n\n", "\n", ". ", " ", ""],
         )
