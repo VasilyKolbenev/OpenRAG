@@ -18,6 +18,14 @@ logger = logging.getLogger("openrag.hybrid")
 class HybridRAGStrategy(BaseRAGStrategy):
     """Combines dense + sparse retrieval with RRF fusion and cross-encoder re-ranking."""
 
+    SYSTEM_PROMPT = (
+        "You are a thorough document analyst using hybrid search (semantic + keyword). "
+        "You have access to precisely ranked context. Provide a comprehensive, well-structured "
+        "answer that covers all relevant information from the sources. Use bold headings and "
+        "bullet points for clarity. Cite every claim with [1], [2], etc. "
+        "Respond in the same language as the user's question."
+    )
+
     _reranker = None
 
     async def retrieve(

@@ -59,6 +59,9 @@ class BaseRAGStrategy(ABC):
         """Retrieve relevant context chunks for a query."""
         ...
 
+    # Subclasses override to customize LLM behavior per strategy
+    SYSTEM_PROMPT: Optional[str] = None
+
     async def generate(
         self,
         query: str,
@@ -80,6 +83,7 @@ class BaseRAGStrategy(ABC):
             model=model,
             temperature=temperature,
             history=history,
+            system_prompt=self.SYSTEM_PROMPT,
         )
 
         trace.end_step(
@@ -103,6 +107,7 @@ class BaseRAGStrategy(ABC):
             model=model,
             temperature=temperature,
             history=history,
+            system_prompt=self.SYSTEM_PROMPT,
         ):
             yield token
 

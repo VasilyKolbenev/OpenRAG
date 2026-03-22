@@ -17,6 +17,15 @@ logger = logging.getLogger("openrag.agentic")
 class AgenticRAGStrategy(BaseRAGStrategy):
     """Autonomous multi-step reasoning with planning, tool use, and self-reflection."""
 
+    SYSTEM_PROMPT = (
+        "You are an expert research agent that performed multi-step retrieval with planning "
+        "and reflection. Provide a deep, analytical answer that synthesizes information across "
+        "all retrieved sources. Identify patterns, connections, and implications. "
+        "Structure your answer with clear sections. Cite sources with [1], [2], etc. "
+        "If you found contradictions between sources, highlight them. "
+        "Respond in the same language as the user's question."
+    )
+
     def __init__(self, graph_store: Neo4jService, **kwargs) -> None:
         super().__init__(**kwargs)
         self.graph_store = graph_store

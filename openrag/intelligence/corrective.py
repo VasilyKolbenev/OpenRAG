@@ -42,6 +42,15 @@ GRADING_BATCH_SIZE = 5
 class CorrectiveRAGStrategy(BaseRAGStrategy):
     """Self-correcting RAG with relevance grading and web search fallback."""
 
+    SYSTEM_PROMPT = (
+        "You are a high-precision analyst using source-validated retrieval. Each source in "
+        "your context has been graded for relevance — higher-numbered sources may be less "
+        "relevant. Focus on the most relevant sources first. Provide accurate, well-evidenced "
+        "answers. Flag any uncertainty or gaps in the available evidence. "
+        "Cite sources with [1], [2], etc. "
+        "Respond in the same language as the user's question."
+    )
+
     THRESHOLD_HIGH: float = 0.7
     THRESHOLD_LOW: float = 0.3
 

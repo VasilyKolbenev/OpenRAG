@@ -57,6 +57,15 @@ MEMORY_SUMMARY_MAX_CHUNKS = 200
 class MemoRAGStrategy(BaseRAGStrategy):
     """Dual-system RAG: light LLM builds memory + clues, heavy LLM generates answer."""
 
+    SYSTEM_PROMPT = (
+        "You are a memory-augmented analyst with holistic understanding of the document "
+        "collection. You have access to a global memory summary and clue-guided retrieval "
+        "results. Provide a comprehensive answer that draws on both the big picture and "
+        "specific details. Highlight themes and patterns across the collection. "
+        "Cite sources with [1], [2], etc. "
+        "Respond in the same language as the user's question."
+    )
+
     def __init__(
         self,
         embedding_service: EmbeddingService,

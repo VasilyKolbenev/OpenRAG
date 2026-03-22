@@ -10,6 +10,13 @@ from openrag.intelligence.base import BaseRAGStrategy
 class NaiveRAGStrategy(BaseRAGStrategy):
     """Simple vector similarity search — fast, predictable, easy to debug."""
 
+    SYSTEM_PROMPT = (
+        "You are a fast document assistant. Give a clear, direct answer based on the provided "
+        "context. Cite sources with [1], [2], etc. Keep the answer focused but complete — "
+        "cover all key points from the context without unnecessary elaboration. "
+        "Respond in the same language as the user's question."
+    )
+
     async def retrieve(
         self,
         query: str,

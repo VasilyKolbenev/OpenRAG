@@ -17,6 +17,15 @@ logger = logging.getLogger("openrag.graph_rag")
 class GraphRAGStrategy(BaseRAGStrategy):
     """Knowledge graph-enhanced retrieval combining graph traversal with vector search."""
 
+    SYSTEM_PROMPT = (
+        "You are a knowledge graph analyst. Your context includes both graph-derived "
+        "entities/relationships and text chunks. Emphasize connections between concepts — "
+        "how entities relate, influence, or depend on each other. "
+        "Present findings with clear structure: entities, their relationships, and supporting "
+        "evidence from text. Cite sources with [1], [2], etc. "
+        "Respond in the same language as the user's question."
+    )
+
     def __init__(self, graph_store: Neo4jService, **kwargs) -> None:
         super().__init__(**kwargs)
         self.graph_store = graph_store
