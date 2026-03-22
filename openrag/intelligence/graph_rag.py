@@ -29,6 +29,7 @@ class GraphRAGStrategy(BaseRAGStrategy):
         top_k: int = 10,
         max_hops: int = 3,
         entity_types: Optional[list[str]] = None,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         # 1. Extract entities from query using LLM
@@ -39,40 +40,47 @@ class GraphRAGStrategy(BaseRAGStrategy):
             result_count=len(entities),
         )
 
-        # 2. Graph traversal
+        # 2. Graph traversal (graceful degradation if Neo4j unavailable)
         graph_context = []
         if entities:
             trace.start_step(
                 "graph_traversal",
                 input_summary=f"entities={len(entities)}, max_hops={max_hops}",
             )
-            nodes, edges = await self.graph_store.traverse(
-                entity_names=entities,
-                max_hops=max_hops,
-                collection=collection,
-            )
-            trace.end_step(
-                output_summary=f"nodes={len(nodes)}, edges={len(edges)}",
-                result_count=len(nodes),
-                details={
-                    "node_types": list({n.type for n in nodes}),
-                    "edge_types": list({e.type for e in edges}),
-                },
-            )
+            try:
+                nodes, edges = await self.graph_store.traverse(
+                    entity_names=entities,
+                    max_hops=max_hops,
+                    collection=collection,
+                )
+                trace.end_step(
+                    output_summary=f"nodes={len(nodes)}, edges={len(edges)}",
+                    result_count=len(nodes),
+                    details={
+                        "node_types": list({n.type for n in nodes}),
+                        "edge_types": list({e.type for e in edges}),
+                    },
+                )
 
-            # Build graph context strings
-            for node in nodes:
-                graph_context.append({
-                    "content": f"Entity: {node.name} (type: {node.type}). Properties: {json.dumps(node.properties, default=str)}",
-                    "score": 0.9,
-                    "metadata": {"source": "knowledge_graph", "entity": node.name, "type": node.type},
-                })
-            for edge in edges:
-                graph_context.append({
-                    "content": f"Relationship: {edge.source} --[{edge.type}]--> {edge.target}",
-                    "score": 0.85,
-                    "metadata": {"source": "knowledge_graph", "relationship": edge.type},
-                })
+                # Build graph context strings
+                for node in nodes:
+                    graph_context.append({
+                        "content": f"Entity: {node.name} (type: {node.type}). Properties: {json.dumps(node.properties, default=str)}",
+                        "score": 0.9,
+                        "metadata": {"source": "knowledge_graph", "entity": node.name, "type": node.type},
+                    })
+                for edge in edges:
+                    graph_context.append({
+                        "content": f"Relationship: {edge.source} --[{edge.type}]--> {edge.target}",
+                        "score": 0.85,
+                        "metadata": {"source": "knowledge_graph", "relationship": edge.type},
+                    })
+            except Exception as e:
+                logger.warning("Graph traversal unavailable: %s. Falling back to vector-only search.", e)
+                trace.end_step(
+                    output_summary=f"graph_unavailable: {e}",
+                    result_count=0,
+                )
 
         # 3. Vector search for additional context
         trace.start_step("vector_search", input_summary=f"top_k={top_k}")
@@ -81,6 +89,7 @@ class GraphRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=top_k,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(vector_results)}",

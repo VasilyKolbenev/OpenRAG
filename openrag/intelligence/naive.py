@@ -16,6 +16,7 @@ class NaiveRAGStrategy(BaseRAGStrategy):
         collection: str,
         trace: TraceRecorder,
         top_k: int = 5,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         # 1. Embed query
@@ -33,6 +34,7 @@ class NaiveRAGStrategy(BaseRAGStrategy):
             query_vector=query_vector,
             limit=top_k,
             score_threshold=0.5,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(results)}, top_score={results[0].score:.3f}" if results else "found=0",

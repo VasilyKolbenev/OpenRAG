@@ -53,6 +53,7 @@ class BaseRAGStrategy(ABC):
         query: str,
         collection: str,
         trace: TraceRecorder,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         """Retrieve relevant context chunks for a query."""

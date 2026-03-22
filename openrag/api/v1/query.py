@@ -101,6 +101,8 @@ async def query_documents(
         # CRAG
         relevance_threshold=request.relevance_threshold,
         web_search_enabled=request.web_search_enabled,
+        # Document filters
+        filters=request.filters,
     )
 
     # Sufficient Context Check
@@ -241,6 +243,7 @@ async def query_stream(
             )
 
             # Phase 1: Retrieval (use rewritten query)
+            logger.info("Stream query: filters=%s, strategy=%s", request.filters, request.strategy)
             yield {
                 "event": "status",
                 "data": json.dumps({"phase": "retrieving"}),
@@ -262,6 +265,7 @@ async def query_stream(
                 light_model=request.light_model,
                 relevance_threshold=request.relevance_threshold,
                 web_search_enabled=request.web_search_enabled,
+                filters=request.filters,
             )
 
             # Phase 2: Sources

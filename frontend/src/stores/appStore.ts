@@ -250,7 +250,7 @@ export const useAppStore = create<AppState>()(
       setHealthStatus: (s) => set({ healthStatus: s }),
     }),
     {
-      name: 'serpent-app-session',
+      name: 'openrag-app-session',
       // C36: Persist sessionId + recent messages (with size guard)
       partialize: (state) => ({
         sessionId: state.sessionId,
