@@ -2,7 +2,6 @@
 Tests for graph endpoints — GET /graph/explore.
 """
 
-import pytest
 from httpx import AsyncClient
 
 

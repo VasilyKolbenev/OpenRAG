@@ -4,7 +4,6 @@ Tests for LLMService — prompt building, model resolution.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
 from app.services.llm import LLMService
 

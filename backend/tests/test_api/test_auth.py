@@ -2,7 +2,6 @@
 Tests for JWT auth — create, verify, expired, invalid.
 """
 
-import time
 from datetime import datetime, timedelta
 from unittest.mock import patch
 

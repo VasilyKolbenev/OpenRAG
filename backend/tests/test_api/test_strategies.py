@@ -2,7 +2,6 @@
 Tests for strategy endpoints — GET /strategies, POST /recommend.
 """
 
-import pytest
 from httpx import AsyncClient
 
 

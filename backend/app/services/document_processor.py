@@ -4,14 +4,12 @@ Document processing service — parse, chunk, embed, store, extract entities.
 
 import json
 import logging
-import os
 import uuid
 from pathlib import Path
 from typing import Callable, Optional
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.config import settings
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import QdrantService
 

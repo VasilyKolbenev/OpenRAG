@@ -5,7 +5,6 @@ Pipeline: Query → Plan → [Search/Retrieve/Calculate]* → Reflect → Answer
 
 import json
 import logging
-from typing import Optional
 
 from app.services.graph_store import Neo4jService
 from app.services.tracing import TraceRecorder

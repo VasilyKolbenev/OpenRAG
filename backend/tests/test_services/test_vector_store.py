@@ -4,7 +4,6 @@ Tests for QdrantService — search, upsert, collections, health.
 
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 
 from app.services.vector_store import QdrantService, SearchResult
 

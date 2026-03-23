@@ -5,7 +5,6 @@ Tests for NaiveRAGStrategy — embed → search → results, trace steps.
 from unittest.mock import AsyncMock
 
 from app.services.tracing import TraceRecorder
-from app.services.vector_store import SearchResult
 from app.strategies.naive import NaiveRAGStrategy
 
 

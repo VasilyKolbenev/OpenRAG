@@ -4,7 +4,6 @@ Tests for health endpoints — healthy, degraded, readyz.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from httpx import AsyncClient
 
 

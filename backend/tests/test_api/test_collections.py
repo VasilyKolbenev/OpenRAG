@@ -2,7 +2,6 @@
 Tests for collection endpoints — GET /collections.
 """
 
-import pytest
 from httpx import AsyncClient
 
 

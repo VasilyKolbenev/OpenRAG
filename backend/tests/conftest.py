@@ -3,9 +3,8 @@ Root test fixtures — mock services, test app, httpx client.
 All tests run without Docker (pure mocks, ~5s total).
 """
 
-import uuid
 from collections.abc import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -13,7 +12,6 @@ from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings
 from app.dependencies import AuthService
-from app.schemas.query import RAGStrategy
 from app.services.cache import RedisService
 from app.services.embedding import EmbeddingService
 from app.services.graph_store import GraphEdge, GraphNode, Neo4jService

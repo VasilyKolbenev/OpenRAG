@@ -5,7 +5,6 @@ Tests for document endpoints — upload, get status.
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from httpx import AsyncClient
 
 

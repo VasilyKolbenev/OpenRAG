@@ -2,10 +2,8 @@
 Tests for AI Advisor Chatbot — /advisor/chat endpoint.
 """
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from httpx import AsyncClient
 
 from app.api.v1.advisor import _extract_recommendation

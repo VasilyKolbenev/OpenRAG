@@ -4,7 +4,6 @@ FastAPI application with multi-strategy RAG support.
 """
 
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI

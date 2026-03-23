@@ -2,7 +2,6 @@
 Tests for trace endpoints — GET /traces/{trace_id}.
 """
 
-import pytest
 from httpx import AsyncClient
 
 

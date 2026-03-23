@@ -7,11 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.services.cache import RedisService
-from app.services.embedding import EmbeddingService
-from app.services.llm import LLMService
 from app.services.tracing import TraceRecorder, TracingService
-from app.services.vector_store import QdrantService, SearchResult
 from app.strategies.memo_rag import MemoRAGStrategy
 
 

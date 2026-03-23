@@ -2,9 +2,7 @@
 Tests for query endpoints — POST /query, POST /compare, validation.
 """
 
-from unittest.mock import AsyncMock
 
-import pytest
 from httpx import AsyncClient
 
 

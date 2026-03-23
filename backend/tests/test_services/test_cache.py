@@ -3,7 +3,7 @@ Tests for RedisService — key generation, get/set patterns.
 """
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from app.services.cache import RedisService
 
