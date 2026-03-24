@@ -1,5 +1,5 @@
 """
-SERPENT RAG PLATFORM — Configuration
+OpenRAG — Configuration
 Uses pydantic-settings for type-safe environment variable loading.
 """
 
