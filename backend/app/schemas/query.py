@@ -15,6 +15,7 @@ class RAGStrategy(str, Enum):
     HYBRID = "hybrid"
     MEMO = "memo"
     NAIVE = "naive"
+    WIKI = "wiki"
 
 
 class QueryRequest(BaseModel):

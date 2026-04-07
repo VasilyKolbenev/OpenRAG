@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     embedding_model: str = "all-MiniLM-L6-v2"
     embedding_dimensions: int = 384
 
+    # Quantization (Engine)
+    quantization_enabled: bool = False
+    quantization_oversampling: float = 2.0
+
     # Web Search (CRAG)
     web_search_api_key: str = ""
     web_search_provider: str = "tavily"  # tavily | serpapi

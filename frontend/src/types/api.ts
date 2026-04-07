@@ -4,7 +4,7 @@
 
 // ── Enums ──────────────────────────────────────────
 
-export type RAGStrategy = 'agentic' | 'corrective' | 'graph' | 'hybrid' | 'memo' | 'naive';
+export type RAGStrategy = 'agentic' | 'corrective' | 'graph' | 'hybrid' | 'memo' | 'naive' | 'wiki';
 
 export type DocumentStatus = 'pending' | 'processing' | 'indexed' | 'failed' | 'already_exists';
 

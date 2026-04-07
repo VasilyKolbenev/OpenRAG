@@ -15,6 +15,7 @@ from openrag.intelligence.graph_rag import GraphRAGStrategy
 from openrag.intelligence.hybrid import HybridRAGStrategy
 from openrag.intelligence.memo_rag import MemoRAGStrategy
 from openrag.intelligence.naive import NaiveRAGStrategy
+from openrag.intelligence.wiki_rag import WikiRAGStrategy
 
 
 class StrategyFactory:
@@ -61,5 +62,7 @@ class StrategyFactory:
             return MemoRAGStrategy(cache=self._cache, **base_kwargs)
         elif strategy == RAGStrategy.CORRECTIVE:
             return CorrectiveRAGStrategy(**base_kwargs)
+        elif strategy == RAGStrategy.WIKI:
+            return WikiRAGStrategy(cache=self._cache, **base_kwargs)
         else:
             raise ValueError(f"Unknown strategy: {strategy}")

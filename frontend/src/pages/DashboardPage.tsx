@@ -91,6 +91,7 @@ export default function DashboardPage() {
       stats: [
         { label: 'Embedding', value: 'MiniLM-L6-v2' },
         { label: 'Services', value: `${serviceCount}/4 online` },
+        { label: 'Quantization', value: 'Binary (32x)' },
       ],
     },
     {

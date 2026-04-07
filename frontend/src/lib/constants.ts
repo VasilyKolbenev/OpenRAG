@@ -147,6 +147,29 @@ export const STRATEGIES: StrategyMeta[] = [
     latency: 'Medium',
     accuracy: 'High',
   },
+  {
+    id: 'wiki',
+    name: 'Wiki RAG',
+    icon: '\uD83D\uDCDA',
+    color: '#EC4899',
+    desc: 'Persistent knowledge wiki that accumulates across documents. Extracts entities, concepts, and cross-references. Knowledge grows with every new document.',
+    tags: ['Knowledge Wiki', 'Entity Pages', 'Accumulation', 'Cross-References'],
+    strengths: [
+      'Knowledge accumulation over time',
+      'Entity and concept pages',
+      'Contradiction detection',
+      'Cross-document synthesis',
+    ],
+    useCases: [
+      'Large evolving document collections',
+      'Research that builds on previous findings',
+      'Enterprise knowledge management',
+      'Multi-source intelligence analysis',
+    ],
+    complexity: 4,
+    latency: 'Medium-High',
+    accuracy: 'Very High',
+  },
 ];
 
 // ── Strategy Lookup ────────────────────────────────
@@ -161,6 +184,7 @@ export const STRATEGY_COLORS: Record<RAGStrategy, string> = {
   hybrid: '#2DD4A8',
   memo: '#FF6B9D',
   naive: '#38BDF8',
+  wiki: '#EC4899',
 };
 
 // ── Advisor Questions ──────────────────────────────
@@ -262,6 +286,12 @@ export const PIPELINE_CONFIGS: Record<RAGStrategy, PipelineConfigItem[]> = {
     { label: 'Web Search', value: false, type: 'toggle' },
     { label: 'Search Provider', value: 'Tavily', type: 'select' },
     { label: 'Grading Batch Size', value: '5', type: 'number' },
+  ],
+  wiki: [
+    { label: 'Light Model', value: 'openai/gpt-5.4-mini', type: 'select' },
+    { label: 'Wiki TTL', value: '7 days', type: 'select' },
+    { label: 'Max Wiki Pages', value: '100', type: 'number' },
+    { label: 'Contradiction Detection', value: true, type: 'toggle' },
   ],
 };
 
