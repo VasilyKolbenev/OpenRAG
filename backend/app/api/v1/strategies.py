@@ -2,6 +2,7 @@
 Strategy listing and recommendation endpoints.
 """
 
+import asyncio
 import logging
 
 from fastapi import APIRouter, Request
@@ -61,9 +62,10 @@ async def list_strategies(request: Request) -> StrategyListResponse:
     graph_store = getattr(request.app.state, "graph_store", None)
     if graph_store is not None:
         try:
-            graph_healthy = await graph_store.health_check()
-        except Exception as exc:
-            logger.warning("Neo4j health check failed: %s", exc)
+            # Short timeout — UI must not wait on a stale Neo4j connection.
+            graph_healthy = await asyncio.wait_for(graph_store.health_check(), timeout=1.5)
+        except (asyncio.TimeoutError, Exception) as exc:
+            logger.warning("Neo4j health check failed or timed out: %s", exc)
             graph_healthy = False
 
         if not graph_healthy:

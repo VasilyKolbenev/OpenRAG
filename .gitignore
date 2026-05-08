@@ -66,3 +66,8 @@ nul
 
 # ── Misc ──────────────────────────────────────
 install-docker.sh
+
+# ── Local-only / archival material (do not ship to release) ────
+notebooks/
+docs/superpowers/
+CLAUDE_CODE_INVESTOR_DEMO_PLAN.md
