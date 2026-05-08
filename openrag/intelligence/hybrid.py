@@ -5,7 +5,6 @@ Pipeline: Query -> [Dense Vector + BM25 Sparse] -> RRF Fusion -> Cross-Encoder R
 
 import logging
 import re
-from typing import Optional
 
 from rank_bm25 import BM25Okapi
 

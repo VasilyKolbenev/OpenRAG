@@ -60,7 +60,7 @@ export default function ChatMessage({ msg }: ChatMessageProps) {
           <div className="text-[13px] text-serpent-text-tertiary leading-[1.6] font-dm-sans prose prose-invert prose-sm max-w-none [&_pre]:bg-[#060606] [&_pre]:border [&_pre]:border-[#131313] [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-[11px] [&_code]:font-mono [&_code]:text-[11px] [&_code]:bg-[#111] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
             <ReactMarkdown>{msg.content || '\u00A0'}</ReactMarkdown>
             {msg.isStreaming && (
-              <span className="inline-block w-[2px] h-4 bg-strategy-agentic animate-pulse ml-0.5 align-text-bottom" />
+              <span className="inline-block w-[2px] h-4 bg-strategy-lightrag animate-pulse ml-0.5 align-text-bottom" />
             )}
           </div>
         )}

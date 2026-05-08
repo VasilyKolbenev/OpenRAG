@@ -31,14 +31,29 @@ export interface UploadedFile {
   collection: string;
 }
 
-const WELCOME_MESSAGE = (strategy: RAGStrategy): ChatMessage => ({
-  id: 'welcome',
-  role: 'assistant',
-  content:
-    'Welcome to OpenRAG \u2014 I\'m ready to process your queries using the selected retrieval strategy. Upload documents and ask me anything.',
-  strategy,
-  timestamp: Date.now(),
-});
+const WELCOME_MESSAGE = (strategy: RAGStrategy): ChatMessage => {
+  const isAgentic = strategy === 'agentic';
+  const isGraph =
+    strategy === 'graph' || strategy === 'corrective' || strategy === 'wiki';
+  let content: string;
+  if (isAgentic) {
+    content =
+      'OpenRAG is ready with AgenticRAG. Upload documents and ask multi-step research questions that benefit from planning, tool use, and self-reflection.';
+  } else if (isGraph) {
+    content =
+      'OpenRAG is ready with GraphRAG. Upload documents and ask relationship-heavy questions that need entities, links, and explainable traversal.';
+  } else {
+    content =
+      'OpenRAG is ready with LightRAG. Upload documents and ask questions across PDFs, tables, notes, and mixed knowledge bases.';
+  }
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    content,
+    strategy,
+    timestamp: Date.now(),
+  };
+};
 
 interface AppState {
   // Strategy
@@ -88,11 +103,11 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // Strategy
-      selectedStrategy: 'hybrid',
+      selectedStrategy: 'lightrag',
       setSelectedStrategy: (s) => set({ selectedStrategy: s }),
 
       // Chat
-      messages: [WELCOME_MESSAGE('hybrid')],
+      messages: [WELCOME_MESSAGE('lightrag')],
 
       addUserMessage: (content, strategy) => {
         const id = generateId();

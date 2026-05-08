@@ -18,7 +18,6 @@ import type {
   RecommendationResponse,
   PipelineTrace,
   GraphData,
-  QualityMetrics,
   HealthResponse,
   AdvisorChatRequest,
   AdvisorChatResponse,
@@ -211,19 +210,6 @@ export async function getGraph(params: {
   return request<GraphData>(`/graph/explore?${searchParams.toString()}`);
 }
 
-// ── Quality Metrics ────────────────────────────────
-
-export async function getQualityMetrics(params: {
-  strategy?: string;
-  period?: string;
-}): Promise<QualityMetrics> {
-  const searchParams = new URLSearchParams();
-  if (params.strategy) searchParams.set('strategy', params.strategy);
-  if (params.period) searchParams.set('period', params.period);
-
-  return request<QualityMetrics>(`/metrics/quality?${searchParams.toString()}`);
-}
-
 // ── Advisor Chatbot ───────────────────────────────
 
 export async function advisorChat(
@@ -253,43 +239,21 @@ export async function health(): Promise<HealthResponse> {
   return request<HealthResponse>('/health');
 }
 
-// ── Analytics ─────────────────────────────────────
+// ── Auth ──────────────────────────────────────────
 
-export interface AnalyticsData {
-  strategy_usage: Record<string, number>;
-  avg_latency_by_strategy: Record<string, number>;
-  total_queries: number;
-  top_queries: string[];
+export interface LoginRequest {
+  password: string;
+  user_id?: string;
 }
 
-export async function getAnalytics(): Promise<AnalyticsData> {
-  return request<AnalyticsData>('/analytics');
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in_hours: number;
 }
 
-// ── Engine Models ─────────────────────────────────
-
-export interface EngineModel {
-  name: string;
-  provider: string;
-  type: string;
-  status: string;
-  latency_ms: number | null;
-}
-
-export async function getEngineModels(): Promise<{ models: EngineModel[] }> {
-  return request<{ models: EngineModel[] }>('/engine/models');
-}
-
-// ── Feedback ──────────────────────────────────────
-
-export interface FeedbackRequest {
-  query_id: string;
-  rating: string;
-  comment?: string;
-}
-
-export async function submitFeedback(params: FeedbackRequest): Promise<{ status: string }> {
-  return request<{ status: string }>('/feedback', {
+export async function login(params: LoginRequest): Promise<LoginResponse> {
+  return request<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(params),
   });
@@ -310,14 +274,11 @@ export const api = {
   recommend,
   getTrace,
   getGraph,
-  getQualityMetrics,
   advisorChat,
   listSessions,
   deleteSession,
   health,
-  getAnalytics,
-  getEngineModels,
-  submitFeedback,
+  login,
 } as const;
 
 export { ApiError };

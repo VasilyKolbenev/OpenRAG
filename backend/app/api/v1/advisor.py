@@ -1,5 +1,5 @@
 """
-AI Advisor Chatbot — conversational strategy recommendation.
+AI Advisor Chatbot -> conversational strategy recommendation.
 Stateful LLM chat with system prompt checklist.
 Session history stored in Redis (1h TTL).
 """
@@ -21,7 +21,7 @@ logger = logging.getLogger("openrag.advisor")
 router = APIRouter(tags=["advisor"])
 
 ADVISOR_SYSTEM_PROMPT = """You are an AI strategy advisor for the OpenRAG platform. \
-Your role is to help users choose the best RAG strategy and configuration \
+Your role is to help users choose the best retrieval engine and configuration \
 for their use case through a conversational interview.
 
 CHECKLIST (gather this information naturally through conversation):
@@ -33,13 +33,9 @@ complex multi-step, very complex research)
 5. Scale: How much data? (small <1K docs, medium 1K-100K, large 100K+)
 6. Special requirements: Real-time? Compliance? Multi-language?
 
-AVAILABLE STRATEGIES:
-- **Naive**: Simple vector search. Fast, cheap, good for simple factual queries.
-- **Hybrid**: Dense + sparse retrieval with reranking. Best general-purpose strategy.
-- **Graph**: Knowledge graph-enhanced. Best for structured/relational data.
-- **Agentic**: Multi-step reasoning with tool use. Best for complex research queries.
-- **MemoRAG**: Dual-system with global memory. Best for large collections needing holistic understanding.
-- **Corrective (CRAG)**: Self-correcting with relevance grading. Best for high-accuracy domains.
+AVAILABLE ENGINES:
+- **LightRAG**: Default engine for most document collections. Fast dual-level retrieval with ReasoningBank memory and TurboQuant-ready runtime optimization.
+- **GraphRAG**: Best for entity-rich, relational, compliance-heavy, or research-heavy corpora where explainability and relationship traversal matter.
 
 RULES:
 - Ask 1-2 questions at a time, not all at once
@@ -47,21 +43,23 @@ RULES:
 - After gathering enough info (at least 3-4 checklist items), provide your recommendation
 - When ready to recommend, include a JSON block in your response:
 ```json
-{"recommended": "hybrid", "scores": {"naive": 0.3, "hybrid": 0.9, ...}, \
+{"recommended": "lightrag", "scores": {"lightrag": 0.9, "graph": 0.5}, \
 "reasoning": "brief explanation", "settings": {"top_k": 10, "temperature": 0.1}}
 ```
-- Always explain WHY you recommend a specific strategy
-- If unsure, recommend Hybrid as the safe default"""
+- Always explain WHY you recommend a specific engine
+- If unsure, recommend LightRAG as the safe default"""
 
 
 class AdvisorChatRequest(BaseModel):
     """Request for advisor chat endpoint."""
+
     session_id: Optional[str] = None
     message: str = Field(..., min_length=1, max_length=5000)
 
 
 class AdvisorRecommendation(BaseModel):
     """Extracted recommendation from advisor response."""
+
     recommended: str
     scores: dict[str, float] = Field(default_factory=dict)
     reasoning: str = ""
@@ -70,6 +68,7 @@ class AdvisorRecommendation(BaseModel):
 
 class AdvisorChatResponse(BaseModel):
     """Response from advisor chat endpoint."""
+
     session_id: str
     reply: str
     recommendation: Optional[AdvisorRecommendation] = None
@@ -86,17 +85,14 @@ async def advisor_chat(
     app = req.app
     cache = app.state.cache
 
-    # A4: Scope session by user_id to prevent session hijacking
     user_id = current_user["sub"] if current_user and current_user.get("sub") else "anonymous"
     session_id = request.session_id or str(uuid.uuid4())
     history = await cache.get_advisor_session(user_id, session_id) or []
 
-    # Build messages with system prompt
     messages = [{"role": "system", "content": ADVISOR_SYSTEM_PROMPT}]
     messages.extend(history)
     messages.append({"role": "user", "content": request.message})
 
-    # Call LLM (using lightweight model for cost efficiency)
     try:
         response = await litellm.acompletion(
             model=settings.advisor_model,
@@ -105,20 +101,18 @@ async def advisor_chat(
             max_tokens=1024,
         )
         reply = response.choices[0].message.content or ""
-    except Exception as e:
-        logger.error("Advisor LLM call failed: %s", e)
+    except Exception as exc:
+        logger.error("Advisor LLM call failed: %s", exc)
         reply = (
             "I apologize, but I'm having trouble connecting right now. "
-            "As a general recommendation, the **Hybrid** strategy works well "
+            "As a general recommendation, **LightRAG** is the safest default "
             "for most use cases. Could you try again in a moment?"
         )
 
-    # Update history
     history.append({"role": "user", "content": request.message})
     history.append({"role": "assistant", "content": reply})
     await cache.set_advisor_session(user_id, session_id, history, ttl=3600)
 
-    # Try to extract recommendation from reply
     recommendation = _extract_recommendation(reply)
 
     return AdvisorChatResponse(
@@ -132,10 +126,8 @@ async def advisor_chat(
 def _extract_recommendation(reply: str) -> Optional[AdvisorRecommendation]:
     """Extract JSON recommendation from advisor reply, if present."""
     try:
-        # Look for JSON block in reply
         start = reply.find('{"recommended"')
         if start < 0:
-            # Try markdown code block
             code_start = reply.find("```json")
             if code_start >= 0:
                 json_start = reply.find("{", code_start)
@@ -148,13 +140,12 @@ def _extract_recommendation(reply: str) -> Optional[AdvisorRecommendation]:
             else:
                 return None
         else:
-            # Find matching closing brace
             depth = 0
             end = start
-            for i, c in enumerate(reply[start:], start):
-                if c == "{":
+            for i, char in enumerate(reply[start:], start):
+                if char == "{":
                     depth += 1
-                elif c == "}":
+                elif char == "}":
                     depth -= 1
                     if depth == 0:
                         end = i + 1

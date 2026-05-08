@@ -23,6 +23,14 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "JWT_SECRET must be set to a strong secret (>= 32 chars) in production"
                 )
+            if not self.encryption_key or len(self.encryption_key) < 32:
+                raise ValueError(
+                    "ENCRYPTION_KEY must be set to a strong secret (>= 32 chars) in production"
+                )
+            if not self.admin_password or len(self.admin_password) < 12:
+                raise ValueError(
+                    "OPENRAG_ADMIN_PASSWORD must be set (>= 12 chars) to enable the auth flow in production"
+                )
         return self
 
     # Database
@@ -47,6 +55,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_hours: int = 24
+    encryption_key: str = ""
+    # OPENRAG_ADMIN_PASSWORD enables the built-in password -> JWT flow.
+    # In production this is required; in development it stays empty so unauthenticated requests work.
+    admin_password: str = ""
 
     # Application
     environment: str = "development"
@@ -64,6 +76,8 @@ class Settings(BaseSettings):
     # Quantization (Engine)
     quantization_enabled: bool = False
     quantization_oversampling: float = 2.0
+    turboquant_enabled: bool = True
+    turboquant_default_bits: int = 4
 
     # Web Search (CRAG)
     web_search_api_key: str = ""
@@ -78,6 +92,8 @@ class Settings(BaseSettings):
     relevance_threshold: float = 0.7
     max_chat_history_messages: int = 20
     memo_memory_ttl: int = 86400  # 24h
+    reasoning_bank_ttl: int = 604800  # 7d
+    reasoning_bank_max_entries: int = 96
     advisor_session_ttl: int = 3600  # 1h
     chat_session_ttl: int = 14400  # 4h
 

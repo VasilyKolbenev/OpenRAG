@@ -105,6 +105,18 @@ class BaseRAGStrategy(ABC):
         ):
             yield token
 
+    async def record_outcome(
+        self,
+        query: str,
+        collection: str,
+        trace: TraceRecorder,
+        success: bool,
+        context: list[dict],
+        metadata: Optional[dict] = None,
+    ) -> None:
+        """Optional post-query learning hook."""
+        return None
+
     async def check_context_sufficiency(
         self,
         query: str,

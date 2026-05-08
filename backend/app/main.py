@@ -1,6 +1,6 @@
 """
-OPENRAG PLATFORM — Application Factory
-FastAPI application with multi-strategy RAG support.
+OPENRAG PLATFORM -> Application Factory
+FastAPI application with a focused two-engine RAG product surface.
 """
 
 import logging
@@ -19,11 +19,10 @@ logger = logging.getLogger("openrag")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifecycle — initialize and cleanup services."""
+    """Application lifecycle -> initialize and cleanup services."""
     setup_logging()
     logger.info("Starting OpenRAG Platform...")
 
-    # Initialize services
     from app.services.cache import RedisService
     from app.services.embedding import EmbeddingService
     from app.services.graph_store import Neo4jService
@@ -32,38 +31,31 @@ async def lifespan(app: FastAPI):
     from app.services.vector_store import QdrantService
     from app.strategies.factory import StrategyFactory
 
-    # Cache (Redis)
     cache = RedisService()
     await cache.initialize()
     app.state.cache = cache
 
-    # Embedding
     embedding = EmbeddingService()
     await embedding.initialize()
     app.state.embedding_service = embedding
 
-    # Vector store (Qdrant)
     vector_store = QdrantService()
     await vector_store.initialize()
     app.state.vector_store = vector_store
 
-    # Graph store (Neo4j)
     graph_store = Neo4jService()
     try:
         await graph_store.initialize()
-    except Exception as e:
-        logger.warning(f"Neo4j unavailable (Graph RAG disabled): {e}")
+    except Exception as exc:
+        logger.warning("Neo4j unavailable (GraphRAG degraded): %s", exc)
     app.state.graph_store = graph_store
 
-    # LLM
     llm = LLMService()
     app.state.llm_service = llm
 
-    # Tracing
     tracing = TracingService(cache=cache)
     app.state.tracing_service = tracing
 
-    # Strategy factory
     factory = StrategyFactory(
         embedding_service=embedding,
         llm_service=llm,
@@ -76,12 +68,12 @@ async def lifespan(app: FastAPI):
     logger.info("All services initialized")
     yield
 
-    # Cleanup
     logger.info("Shutting down OpenRAG Platform...")
     await vector_store.close()
     await graph_store.close()
     await cache.close()
     from app.models.base import close_db
+
     await close_db()
 
 
@@ -89,14 +81,13 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
         title="OpenRAG",
-        description="Universal self-hosted RAG platform with Agentic, Graph, Hybrid, and Simple strategies",
+        description="Focused self-hosted RAG platform built around LightRAG and GraphRAG",
         version="1.0.0",
         lifespan=lifespan,
         docs_url="/docs" if not settings.is_production else None,
         redoc_url="/redoc" if not settings.is_production else None,
     )
 
-    # CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.frontend_url],
@@ -106,36 +97,30 @@ def create_app() -> FastAPI:
         max_age=3600,
     )
 
-    # Rate limiting (before logging so rejected requests are also logged)
     app.add_middleware(RateLimitMiddleware)
-
-    # Request logging
     app.add_middleware(RequestLoggingMiddleware)
 
-    # Tenant isolation (multi-tenancy)
     if settings.multi_tenancy_enabled:
         from app.middleware.tenant import TenantMiddleware
+
         app.add_middleware(TenantMiddleware)
 
-    # Trusted hosts (production)
     if settings.is_production:
         app.add_middleware(
             TrustedHostMiddleware,
             allowed_hosts=[settings.domain],
         )
 
-    # Telemetry (must be added before app starts — cannot add middleware in lifespan)
     from app.middleware.telemetry import setup_telemetry
+
     setup_telemetry(app)
 
-    # Routers
     from app.api.router import api_router
-    app.include_router(api_router)
 
+    app.include_router(api_router)
     return app
 
 
-# Application instance
 app = create_app()
 
 

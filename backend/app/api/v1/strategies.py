@@ -16,50 +16,26 @@ router = APIRouter(tags=["strategies"])
 
 STRATEGY_DETAILS = [
     StrategyInfo(
-        id="naive",
-        name="Simple RAG",
-        description="Straightforward vector similarity search",
-        complexity=1,
-        latency="low",
-        accuracy="medium",
-    ),
-    StrategyInfo(
-        id="hybrid",
-        name="Hybrid RAG",
-        description="Dense + Sparse retrieval with re-ranking",
-        complexity=3,
+        id="lightrag",
+        name="LightRAG",
+        description="Dual-level retrieval with ReasoningBank guidance and TurboQuant-ready runtime profile",
+        complexity=2,
         latency="low-medium",
         accuracy="high",
     ),
     StrategyInfo(
-        id="graph",
-        name="Graph RAG",
-        description="Knowledge graph-enhanced retrieval",
-        complexity=4,
-        latency="medium",
-        accuracy="high",
-    ),
-    StrategyInfo(
         id="agentic",
-        name="Agentic RAG",
-        description="Autonomous multi-step reasoning with tool use",
+        name="AgenticRAG",
+        description="Autonomous multi-step planning, tool use, and self-reflection for complex research questions",
         complexity=5,
         latency="medium-high",
         accuracy="very-high",
     ),
     StrategyInfo(
-        id="memo",
-        name="MemoRAG",
-        description="Dual-system RAG with global memory and clue-guided retrieval",
+        id="graph",
+        name="GraphRAG",
+        description="Knowledge-graph traversal with ReasoningBank guidance for relationship-heavy questions",
         complexity=4,
-        latency="medium",
-        accuracy="high",
-    ),
-    StrategyInfo(
-        id="corrective",
-        name="Corrective RAG",
-        description="Self-correcting retrieval with relevance grading and web fallback",
-        complexity=3,
         latency="medium",
         accuracy="high",
     ),
@@ -68,7 +44,7 @@ STRATEGY_DETAILS = [
 
 @router.get("/strategies", response_model=StrategyListResponse)
 async def list_strategies():
-    """List all available RAG strategies with details."""
+    """List the focused product engines."""
     return StrategyListResponse(strategies=STRATEGY_DETAILS)
 
 

@@ -23,6 +23,7 @@ export default {
         strategy: {
           agentic: '#C8F547',
           graph: '#8B5CF6',
+          lightrag: '#2DD4A8',
           hybrid: '#2DD4A8',
           naive: '#38BDF8',
         },

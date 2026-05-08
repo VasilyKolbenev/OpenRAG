@@ -2,7 +2,8 @@ version: "3.9"
 
 # ─────────────────────────────────────────────────────
 # OpenRAG — Production Docker Compose
-# Agentic RAG · Graph RAG · Hybrid RAG · Simple RAG
+# LightRAG · AgenticRAG · GraphRAG (canonical engines)
+# Active backend: backend/app (mounted via backend/Dockerfile)
 # ─────────────────────────────────────────────────────
 
 x-common: &common
@@ -104,7 +105,7 @@ services:
   # ── Backend API (FastAPI) ──────────────────────────
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: openrag-api
     <<: *common
@@ -160,12 +161,12 @@ services:
   # ── RAG Worker (Celery) ────────────────────────────
   worker:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: openrag-worker
     <<: *common
     read_only: false
-    command: celery -A openrag.workers.celery_app:celery_app worker -l info -c 4 -Q ingest,evaluate
+    command: celery -A app.workers.celery_app:celery_app worker -l info -c 4 -Q ingest,evaluate
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openrag}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-openrag}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0

@@ -1,128 +1,116 @@
-# OpenRAG — Investor Demo Runbook
+# OpenRAG Investor Demo Runbook
 
-## Architecture: 5 Primitives
+## Core Story
 
-OpenRAG is built on 5 primitives — each card on the dashboard represents a core subsystem:
+OpenRAG is a self-hosted document intelligence platform with a deliberately
+focused product surface:
 
-| Primitive | Purpose | Demo Proof |
-|-----------|---------|------------|
-| **Intelligence** | RAG strategy catalog + AI auto-recommendation | Advisor page, Chat |
-| **Engine** | Embedding, vector store, LLM runtime | Health status, model info |
-| **Agents** | Background document processing pipeline | Documents page |
-| **Tools & Memory** | MCP integration, CLI, semantic memory | MCP tools, CLI commands |
-| **Learning** | Trace-based pipeline analysis & optimization | Debugger page |
+- `LightRAG` — fast dual-level retrieval for mixed corpora
+- `AgenticRAG` — autonomous multi-step research with planning and reflection
+- `GraphRAG` — relationship-heavy, explainable reasoning over a knowledge graph
+- ReasoningBank-style memory and TurboQuant controls as platform optimizers
 
-## 1. Pre-demo Setup (5 min)
+## Demo Flow
 
-```bash
-cd serpent-rag-platform
-docker compose up -d
+### 1. Dashboard
 
-# Wait for healthy
-curl http://localhost:8000/api/health
+Open the Command Center and position OpenRAG as a focused three-engine
+platform, not an experiment catalog.
 
-# Verify seed data
-docker compose logs api | grep "Seed data loaded"
-```
+Key talking points:
 
-Frontend: **http://localhost:3000** (Docker) or start `cd frontend && npm run dev`
+- AI-guided engine selection
+- self-hosted deployment
+- traces for every query
+- one runtime, three clear retrieval modes
 
-## 2. Demo Flow
+### 2. Intelligence
 
-### Step 1 — Command Center (Dashboard)
+Open the advisor page.
 
-- Open the app → lands on **Command Center**
-- Show 5 primitive cards — each with live stats:
-  - **Intelligence**: 6 strategies, AI Advisor link
-  - **Engine**: MiniLM-L6-v2 embedding, services online
-  - **Agents**: documents indexed, collections count
-  - **Tools & Memory**: 6 MCP tools, 8 CLI commands
-  - **Learning**: Pipeline traces, real-time debugger
-- Key message: *"Each primitive is a pluggable subsystem — swap components without rewriting"*
+Show:
 
-### Step 2 — Intelligence (AI Advisor)
+- conversational advisor on the left
+- three-engine catalog on the right
 
-- Click **Advisor** in sidebar → full-page AI Strategy Advisor
-- Left panel: conversational AI chat
-- Right panel: strategy catalog with 6 strategies
-- Try prompt: *"I have legal contracts to analyze"*
-- AI recommends a strategy → click **"Use This Strategy →"** → goes to Chat
-- Key message: *"AI doesn't just catalog strategies — it analyzes your use case and recommends"*
+Suggested prompt:
 
-### Step 3 — Chat (Query)
+> "I have legal contracts with linked entities, obligations, and renewal chains."
 
-- Strategy is pre-selected from Advisor recommendation
-- Ask: **"What is RAG and how does OpenRAG implement it?"**
-- Show: real-time **token streaming**, **source citations**, **trace link**
-- Switch strategy via dropdown → ask same question → different approach
-- Key message: *"Same question, different strategy — different strengths"*
+Expected outcome:
 
-### Step 4 — Agents (Documents)
+- advisor recommends `GraphRAG`
+- explain that `LightRAG` is the default for generic search and `AgenticRAG` is
+  the choice when one question hides several sub-questions
 
-- Click **Documents** in sidebar
-- Show pre-loaded seed documents (3 markdown files)
-- Upload a new file via drag & drop
-- Key message: *"Background agents parse, chunk, embed — fully automatic"*
+### 3. Chat
 
-### Step 5 — Learning (Debugger)
+Run the same question first with `LightRAG`, then with `AgenticRAG`, then with
+`GraphRAG`.
 
-- Click **Debugger** in sidebar
-- Open trace from last query
-- Show pipeline: embedding → retrieval → reranking → generation
-- Point out: latency per stage, chunks retrieved, model used
-- Key message: *"Every query generates a trace — data for continuous optimization"*
+Suggested question:
 
-### Step 6 — Compare (A/B Testing)
+> "What are the obligations connected to the renewal clause and who owns them?"
 
-- Click **Compare** in sidebar
-- Enter: **"Compare the RAG strategies"**
-- Select **Naive** vs **Hybrid** vs **Agentic**
-- Show side-by-side results
-- Key message: *"Data-driven strategy selection, not guesswork"*
+Key talking point:
 
-## 3. Suggested Demo Questions
+- same corpus, different engine specialization
 
-| Question | Best Strategy | Why |
-|----------|--------------|-----|
-| "What is RAG?" | Naive / Hybrid | Simple factual, shows speed |
-| "Compare strategies" | Hybrid | Multi-source synthesis |
-| "Security policies?" | Naive | Direct document lookup |
-| "Deploy OpenRAG in production?" | Agentic | Complex multi-step |
-| "Monitoring and observability?" | Hybrid | Cross-document |
+### 4. Documents
 
-## 4. Pages to Show
+Show upload and indexing.
 
-| Page | Route | Primitive |
-|------|-------|-----------|
-| Command Center | `/dashboard` | All 5 |
-| Advisor | `/intelligence` | Intelligence |
-| Chat | `/chat` | Intelligence |
-| Documents | `/documents` | Agents |
-| Debugger | `/debugger` | Learning |
-| Compare | `/compare` | Intelligence |
+Key talking point:
 
-## 5. Investor Talking Points
+- the platform ingests documents once, then all three engines reuse the same corpus
 
-1. **5-Primitive Architecture** — modular, each subsystem independently replaceable
-2. **6 RAG Strategies** — from simple to autonomous multi-step reasoning
-3. **AI-Powered Advisor** — auto-recommends strategy based on use case
-4. **Full Observability** — pipeline traces for every query
-5. **Self-Hosted** — data never leaves customer infrastructure
-6. **Multi-Interface** — Web UI + CLI + MCP (Claude Desktop integration)
-7. **Learning Loop** — traces become optimization data (roadmap: auto-tuning)
+### 5. Compare
 
-## 6. Known Limitations (do not demo)
+Open the compare page and run all three engines side by side.
 
-- Graph Explorer (requires populated Neo4j)
-- Quality Dashboard (requires RAGAS evaluation dataset)
-- Analytics (placeholder)
-- Web search fallback in CRAG (requires Tavily API key)
+Suggested question:
 
-## 7. Troubleshooting
+> "Summarize the main obligations and linked entities."
 
-| Issue | Fix |
-|-------|-----|
-| API returns 500 | `docker compose logs api` |
-| No seed documents | `docker compose restart api` |
-| Slow first query | Model loading (~3 sec), subsequent fast |
-| "Services offline" | Wait for API init, check health endpoint |
+Key talking points:
+
+- product buyers can compare speed vs research depth vs relationship traversal directly
+- compare accepts two or three engines per request
+
+### 6. Debugger
+
+Open the trace from one of the queries.
+
+Highlight:
+
+- retrieval path
+- sources used
+- latency
+- engine-specific behavior (planning steps for AgenticRAG, hop expansion for GraphRAG)
+
+## Suggested Demo Questions
+
+| Question | Best engine | Why |
+|---|---|---|
+| "What are the key findings?" | LightRAG | fast default document synthesis |
+| "Walk through every counterparty obligation step by step" | AgenticRAG | multi-step planning and reflection |
+| "Which entities are linked to this clause?" | GraphRAG | entity and relation traversal |
+| "Summarize the renewal policy." | LightRAG | broad document summary |
+| "Trace obligations across counterparties and check for conflicts." | AgenticRAG / GraphRAG | research depth or graph reasoning |
+
+## Investor Talking Points
+
+1. Three-engine product instead of a confusing strategy catalog.
+2. LightRAG covers the default enterprise search use case.
+3. AgenticRAG covers autonomous research and audit-style workflows.
+4. GraphRAG covers explainability and relationship-heavy workloads.
+5. ReasoningBank-style memory improves repeat-query behavior across engines.
+6. TurboQuant controls give a deployment-level latency and cost story.
+7. The whole platform is self-hosted and traceable.
+
+## Do Not Overclaim
+
+- TurboQuant is currently exposed as runtime control, not a custom low-level kernel story.
+- ReasoningBank is implemented as retrieval memory inside the platform, not a separate agent framework.
+- Neo4j is optional, so GraphRAG depends on that service being available.
+- AgenticRAG is bounded by an iteration cap and an LLM-routed tool selector; it is not a fully autonomous agent framework.

@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field
 
 from openrag.config import settings
 from openrag.dependencies import require_auth_in_production
-from openrag.schemas.query import RAGStrategy
 
 logger = logging.getLogger("openrag.advisor")
 
@@ -86,7 +85,6 @@ async def advisor_chat(
     """Conversational AI advisor for strategy selection."""
     app = req.app
     cache = app.state.cache
-    llm = app.state.llm_service
 
     # A4: Scope session by user_id to prevent session hijacking
     user_id = current_user["sub"] if current_user and current_user.get("sub") else "anonymous"

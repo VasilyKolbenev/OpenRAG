@@ -1,5 +1,5 @@
 /**
- * Strategies page — strategy grid + advisor wizard + pipeline architecture.
+ * Engine selection page with advisor and pipeline overview.
  */
 
 import { useState } from 'react';
@@ -10,28 +10,28 @@ import { useAppStore } from '@/stores/appStore';
 import type { RAGStrategy } from '@/types/api';
 
 const PIPELINE_STEPS = [
-  { label: 'Ingest', desc: 'PDF \u00B7 DOCX \u00B7 CSV \u00B7 API', icon: '\uD83D\uDCE5', color: '#38BDF8' },
-  { label: 'Process', desc: 'Chunk \u00B7 Embed \u00B7 Extract', icon: '\u2699\uFE0F', color: '#C8F547' },
+  { label: 'Ingest', desc: 'PDF · DOCX · CSV · API', icon: '\uD83D\uDCE5', color: '#38BDF8' },
+  { label: 'Process', desc: 'Chunk · Embed · Extract', icon: '\u2699\uFE0F', color: '#C8F547' },
   { label: 'Index', desc: 'Vector + Graph + BM25', icon: '\uD83D\uDDC4\uFE0F', color: '#8B5CF6' },
-  { label: 'Retrieve', desc: 'Strategy-based RAG', icon: '\uD83D\uDD0D', color: '#2DD4A8' },
+  { label: 'Retrieve', desc: 'LightRAG or GraphRAG', icon: '\uD83D\uDD0D', color: '#2DD4A8' },
   { label: 'Generate', desc: 'LLM + Citations', icon: '\uD83D\uDCAC', color: '#F472B6' },
 ];
 
 export default function StrategiesPage() {
-  const selectedStrategy = useAppStore((s) => s.selectedStrategy);
-  const setSelectedStrategy = useAppStore((s) => s.setSelectedStrategy);
+  const selectedStrategy = useAppStore((state) => state.selectedStrategy);
+  const setSelectedStrategy = useAppStore((state) => state.setSelectedStrategy);
   const [showAdvisor, setShowAdvisor] = useState(false);
 
   return (
     <div className="animate-fade-slide-up">
-      {/* Title + Advisor toggle */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight font-outfit mb-[5px]">
-            Choose Your Strategy
+          <h1 className="mb-[5px] text-[26px] font-semibold tracking-tight font-outfit">
+            Choose Your Engine
           </h1>
           <p className="text-[13px] text-serpent-text-muted font-dm-sans">
-            Select the retrieval approach that best fits your domain
+            LightRAG and GraphRAG cover the product surface. Pick the engine that
+            matches your knowledge structure and delivery goals.
           </p>
         </div>
         <button
@@ -43,11 +43,10 @@ export default function StrategiesPage() {
             color: showAdvisor ? '#C8F547' : '#777',
           }}
         >
-          {'\u2728'} Strategy Advisor
+          {'\u2728'} Engine Advisor
         </button>
       </div>
 
-      {/* Advisor panel */}
       {showAdvisor && (
         <div className="bg-serpent-surface border border-serpent-border-light rounded-[14px] p-6 mb-5 animate-fade-slide-up">
           <AdvisorPanel
@@ -59,42 +58,40 @@ export default function StrategiesPage() {
         </div>
       )}
 
-      {/* Strategy grid */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(290px,1fr))] gap-3">
-        {STRATEGIES.map((s, i) => (
+        {STRATEGIES.map((strategy, index) => (
           <StrategyCard
-            key={s.id}
-            strategy={s}
-            selected={selectedStrategy === s.id}
+            key={strategy.id}
+            strategy={strategy}
+            selected={selectedStrategy === strategy.id}
             onSelect={(id) => setSelectedStrategy(id as RAGStrategy)}
-            index={i}
+            index={index}
           />
         ))}
       </div>
 
-      {/* Pipeline architecture */}
-      <div className="mt-7 p-6 bg-serpent-surface border border-serpent-border-light rounded-[14px]">
-        <h3 className="text-[14px] font-semibold mb-[18px] font-outfit tracking-tight text-serpent-text-secondary">
-          OpenRAG Pipeline Architecture
+      <div className="mt-7 rounded-[14px] border border-serpent-border-light bg-serpent-surface p-6">
+        <h3 className="mb-[18px] text-[14px] font-semibold tracking-tight font-outfit text-serpent-text-secondary">
+          OpenRAG Execution Pipeline
         </h3>
         <div className="grid grid-cols-5 gap-[6px] text-center">
-          {PIPELINE_STEPS.map((step, i) => (
+          {PIPELINE_STEPS.map((step, index) => (
             <div
               key={step.label}
-              className="relative py-[18px] px-2.5 bg-serpent-bg border border-[#141414] rounded-[10px]"
+              className="relative rounded-[10px] border border-[#141414] bg-serpent-bg px-2.5 py-[18px]"
             >
-              <div className="text-[22px] mb-[6px]">{step.icon}</div>
+              <div className="mb-[6px] text-[22px]">{step.icon}</div>
               <div
-                className="text-[11px] font-semibold mb-[3px] font-mono"
+                className="mb-[3px] text-[11px] font-semibold font-mono"
                 style={{ color: step.color }}
               >
                 {step.label}
               </div>
-              <div className="text-[9.5px] text-serpent-text-dark font-dm-sans">
+              <div className="text-[9.5px] font-dm-sans text-serpent-text-dark">
                 {step.desc}
               </div>
-              {i < PIPELINE_STEPS.length - 1 && (
-                <div className="absolute -right-[10px] top-1/2 -translate-y-1/2 text-[#252525] text-xs z-[1]">
+              {index < PIPELINE_STEPS.length - 1 && (
+                <div className="absolute -right-[10px] top-1/2 z-[1] -translate-y-1/2 text-xs text-[#252525]">
                   {'\u2192'}
                 </div>
               )}

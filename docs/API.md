@@ -2,238 +2,252 @@
 
 Base URL: `http://localhost:8000/api`
 
-Interactive docs (Swagger UI): `http://localhost:8000/docs`
+Interactive docs: `http://localhost:8000/docs`
+
+## Canonical Engine IDs
+
+Use these ids in new integrations:
+
+- `lightrag`
+- `agentic`
+- `graph`
+
+Legacy ids are still accepted for migration, but responses normalize to the
+canonical ids.
 
 ## Authentication
 
-All endpoints except `/api/health` require an API key:
+Most endpoints require a bearer JWT when auth is enabled in production:
 
-```
-X-API-Key: your-api-key
-```
-
-Set `OPENRAG_API_KEY` in your `.env` file or use the master key from configuration.
-
-JWT authentication is available as an opt-in fallback:
-
-```
+```text
 Authorization: Bearer <jwt-token>
 ```
 
-## Endpoints
+In development mode (`ENVIRONMENT=development`) auth is optional and protected
+endpoints accept anonymous requests.
 
-### Health
+To obtain a token in production, use the auth flow exposed by the platform
+(or your external IdP, if integrated). See `docs/DEPLOYMENT.md` for
+configuration details.
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/health` | No | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
+## Core Endpoints
 
-Response:
+### `GET /api/health`
 
-```json
-{
-  "status": "healthy",
-  "services": {
-    "postgres": "healthy",
-    "redis": "healthy",
-    "qdrant": "healthy",
-    "neo4j": "degraded"
-  }
-}
-```
+Returns service health for the runtime dependencies (PostgreSQL, Redis,
+Qdrant, optional Neo4j).
 
-### Query
+### `POST /api/query`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/query` | Yes | Execute RAG query with selected strategy |
-| POST | `/api/query/stream` | Yes | SSE streaming RAG query |
+Runs a single query through one engine.
 
-**POST /api/query**
-
-Request:
+Request example:
 
 ```json
 {
-  "query": "What is retrieval augmented generation?",
-  "strategy": "hybrid",
-  "collection": "my-docs",
-  "model": "gpt-4o",
-  "top_k": 5,
+  "query": "What are the main risks in the renewal clause?",
+  "strategy": "lightrag",
+  "collection": "contracts",
+  "top_k": 10,
   "temperature": 0.1,
-  "check_sufficiency": false
+  "enable_reasoning_bank": true,
+  "reasoning_memory_limit": 3,
+  "turboquant_enabled": true,
+  "turboquant_bits": 4
 }
 ```
 
-Response:
+Response example:
 
 ```json
 {
-  "answer": "Retrieval augmented generation is...",
+  "answer": "The main renewal risks are...",
   "sources": [
-    {"chunk_id": "abc-123", "text": "...", "score": 0.92, "metadata": {}}
+    {
+      "content": "The agreement renews automatically unless...",
+      "score": 0.91,
+      "metadata": {
+        "filename": "master-service-agreement.pdf"
+      }
+    }
   ],
-  "trace_id": "trace-456",
-  "strategy": "hybrid",
-  "model": "gpt-4o",
-  "latency_ms": 1250
+  "strategy_used": "lightrag",
+  "metadata": {
+    "model": "openai/gpt-5.4",
+    "top_k": 10,
+    "chunks_retrieved": 6,
+    "query_rewritten": false,
+    "requested_strategy": "lightrag",
+    "optimizers": {
+      "reasoning_bank": true,
+      "turboquant": true,
+      "turboquant_bits": 4
+    }
+  },
+  "latency_ms": 1284,
+  "trace_id": "trace-123",
+  "session_id": "session-456"
 }
 ```
 
-**POST /api/query/stream**
+Supported query fields:
 
-Same request body. Returns `text/event-stream` (SSE):
+| Field | Purpose |
+|---|---|
+| `strategy` | `lightrag`, `agentic`, or `graph` |
+| `max_hops` | Graph traversal depth (GraphRAG) |
+| `entity_types` | Optional graph entity filter (GraphRAG) |
+| `query_mode` | LightRAG retrieval mode (`local` / `global` / `hybrid`) |
+| `sparse_weight` | LightRAG sparse retrieval balance |
+| `enable_reranking` | Enable reranker hook |
+| `enable_reasoning_bank` | Enable retrieval memory recall |
+| `reasoning_memory_limit` | Number of recalled lessons |
+| `turboquant_enabled` | Enable runtime quantization profile |
+| `turboquant_bits` | Target bit-width for the runtime profile |
 
+### `POST /api/query/stream`
+
+Streaming variant of `/api/query`.
+
+Typical event sequence:
+
+```text
+event: status
+data: {"phase":"retrieving"}
+
+event: sources
+data: [...]
+
+event: status
+data: {"phase":"generating"}
+
+event: token
+data: {"text":"..."}
+
+event: done
+data: {"trace_id":"trace-123","latency_ms":1284,"strategy":"lightrag"}
 ```
-data: {"token": "Retrieval"}
-data: {"token": " augmented"}
-data: {"token": " generation"}
-data: {"done": true, "sources": [...], "trace_id": "abc-123"}
-```
 
-### Compare (A/B Testing)
+### `POST /api/compare`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/compare` | Yes | Run query through multiple strategies |
+Runs the same query through two or three canonical engines.
 
-Request:
+Request example:
 
 ```json
 {
-  "query": "Explain vector search",
-  "strategies": ["naive", "hybrid", "graph"],
-  "collection": "my-docs"
+  "query": "Summarize the obligations and linked entities",
+  "strategies": ["lightrag", "agentic", "graph"],
+  "collection": "contracts",
+  "top_k": 10,
+  "temperature": 0.1
 }
 ```
 
-Response:
+Important:
+
+- the compare schema accepts between **two** and **three** strategies
+- duplicate or legacy ids are canonicalized before execution
+- the response only contains canonical engine ids
+
+Response example:
 
 ```json
 {
+  "query": "Summarize the obligations and linked entities",
   "results": [
-    {"strategy": "naive", "answer": "...", "sources": [...], "latency_ms": 800},
-    {"strategy": "hybrid", "answer": "...", "sources": [...], "latency_ms": 1100},
-    {"strategy": "graph", "answer": "...", "sources": [...], "latency_ms": 1400}
+    {
+      "strategy": "lightrag",
+      "answer": "...",
+      "sources": [],
+      "latency_ms": 920,
+      "trace_id": "trace-a"
+    },
+    {
+      "strategy": "agentic",
+      "answer": "...",
+      "sources": [],
+      "latency_ms": 2180,
+      "trace_id": "trace-b"
+    },
+    {
+      "strategy": "graph",
+      "answer": "...",
+      "sources": [],
+      "latency_ms": 1410,
+      "trace_id": "trace-c"
+    }
   ]
 }
 ```
 
-### Documents
+### `GET /api/strategies`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/documents/upload` | Yes | Upload document (PDF, DOCX, TXT, MD, CSV) |
-| GET | `/api/documents` | Yes | List all documents |
-| GET | `/api/documents/{id}` | Yes | Get document details |
-| DELETE | `/api/documents/{id}` | Yes | Delete document and its chunks |
-
-**POST /api/documents/upload**
-
-Multipart form upload:
-
-```bash
-curl -X POST http://localhost:8000/api/documents/upload \
-  -H "X-API-Key: your-key" \
-  -F "file=@report.pdf" \
-  -F "collection=research"
-```
-
-Response:
+Returns the active product engines:
 
 ```json
 {
-  "document_id": "doc-789",
-  "filename": "report.pdf",
-  "status": "processing",
-  "collection": "research",
-  "task_id": "celery-task-abc"
+  "strategies": [
+    {
+      "id": "lightrag",
+      "name": "LightRAG",
+      "description": "Dual-level retrieval with ReasoningBank guidance and TurboQuant-ready runtime profile",
+      "complexity": 2,
+      "latency": "low-medium",
+      "accuracy": "high"
+    },
+    {
+      "id": "agentic",
+      "name": "AgenticRAG",
+      "description": "Autonomous multi-step planning, tool use, and self-reflection for complex research questions",
+      "complexity": 5,
+      "latency": "medium-high",
+      "accuracy": "very-high"
+    },
+    {
+      "id": "graph",
+      "name": "GraphRAG",
+      "description": "Knowledge-graph traversal with ReasoningBank guidance for relationship-heavy questions",
+      "complexity": 4,
+      "latency": "medium",
+      "accuracy": "high"
+    }
+  ]
 }
 ```
 
-### Collections
+### `POST /api/recommend`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/collections` | Yes | List all vector collections |
-| POST | `/api/collections` | Yes | Create new collection |
-| DELETE | `/api/collections/{name}` | Yes | Delete collection |
+Returns a rule-based recommendation across `lightrag`, `agentic`, and `graph`.
 
-### Strategies
+### `POST /api/advisor/chat`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/strategies` | Yes | List available RAG strategies with metadata |
+Conversational advisor that interviews the user and returns a recommendation
+object with:
 
-Response:
+- `recommended`
+- `scores` (one entry per canonical engine)
+- `reasoning`
+- `settings`
 
-```json
-[
-  {
-    "id": "naive",
-    "name": "Simple RAG",
-    "description": "Basic vector similarity search",
-    "latency": "low",
-    "accuracy": "medium"
-  }
-]
-```
+## Document Endpoints
 
-### Pipeline Traces (RAG Debugger)
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/documents/upload` | Upload a document for processing |
+| `GET` | `/api/documents` | List uploaded documents |
+| `GET` | `/api/documents/{id}` | Fetch document details |
+| `DELETE` | `/api/documents/{id}` | Remove a document and indexed chunks |
+| `GET` | `/api/collections` | List collections |
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/traces/{trace_id}` | Yes | Get full pipeline trace |
-| GET | `/api/traces` | Yes | List recent traces |
+## Error Model
 
-### AI Advisor
+Validation and runtime errors are returned through FastAPI's standard `detail`
+payload. Typical statuses:
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/advisor/chat` | Yes | Chat with AI advisor for strategy recommendations |
-
-Request:
-
-```json
-{
-  "message": "I have technical documentation, ~500 pages",
-  "session_id": "optional-session-id"
-}
-```
-
-Response:
-
-```json
-{
-  "reply": "For technical documentation of that size, I recommend...",
-  "session_id": "session-abc",
-  "recommendation": {
-    "strategy": "hybrid",
-    "confidence": 0.85,
-    "reasoning": "Hybrid RAG balances keyword and semantic search..."
-  }
-}
-```
-
-## Error Responses
-
-All errors follow a consistent format:
-
-```json
-{
-  "detail": "Error description",
-  "status_code": 400
-}
-```
-
-| Code | Meaning |
-|------|---------|
-| 400 | Bad request (invalid parameters) |
-| 401 | Unauthorized (missing or invalid API key / JWT) |
-| 403 | Forbidden (insufficient permissions) |
-| 404 | Resource not found |
-| 413 | Payload too large (file upload exceeds limit) |
-| 422 | Validation error (Pydantic schema mismatch) |
-| 429 | Rate limit exceeded |
-| 500 | Internal server error |
-| 503 | Service unavailable (dependency down) |
+- `400` invalid request
+- `401` unauthorized
+- `404` not found
+- `422` schema validation failed
+- `429` rate limit exceeded
+- `500` internal error

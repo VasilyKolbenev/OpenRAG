@@ -1,13 +1,12 @@
 /**
- * Dashboard — Command Center showing 5-primitive architecture.
- * Intelligence / Engine / Agents / Tools & Memory / Learning.
+ * Dashboard command center.
  */
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/stores/appStore';
 import { api } from '@/lib/api';
 import { STRATEGIES } from '@/lib/constants';
+import { useAppStore } from '@/stores/appStore';
 import type { RAGStrategy } from '@/types/api';
 
 interface DashboardStats {
@@ -15,8 +14,6 @@ interface DashboardStats {
   collectionsCount: number;
   tracesCount: number;
 }
-
-/* ── Primitive Definitions ────────────────────────── */
 
 interface PrimitiveCard {
   id: string;
@@ -31,8 +28,8 @@ interface PrimitiveCard {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const healthStatus = useAppStore((s) => s.healthStatus);
-  const setSelectedStrategy = useAppStore((s) => s.setSelectedStrategy);
+  const healthStatus = useAppStore((state) => state.healthStatus);
+  const setSelectedStrategy = useAppStore((state) => state.setSelectedStrategy);
 
   const [stats, setStats] = useState<DashboardStats>({
     documentsCount: 0,
@@ -43,16 +40,21 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
+
     async function fetchStats() {
       try {
         const [collections, documents] = await Promise.allSettled([
           api.getCollections(),
           api.listDocuments(),
         ]);
+
         if (cancelled) return;
+
         setStats({
           collectionsCount:
-            collections.status === 'fulfilled' ? collections.value.collections.length : 0,
+            collections.status === 'fulfilled'
+              ? collections.value.collections.length
+              : 0,
           documentsCount:
             documents.status === 'fulfilled' ? documents.value.total : 0,
           tracesCount: 0,
@@ -61,11 +63,15 @@ export default function DashboardPage() {
         if (!cancelled) setLoading(false);
       }
     }
+
     fetchStats();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const serviceCount = healthStatus === 'healthy' ? 4 : healthStatus === 'degraded' ? 3 : 0;
+  const serviceCount =
+    healthStatus === 'healthy' ? 4 : healthStatus === 'degraded' ? 3 : 0;
 
   const primitives: PrimitiveCard[] = [
     {
@@ -74,9 +80,10 @@ export default function DashboardPage() {
       icon: '\uD83E\uDDE0',
       color: '#C8F547',
       gradient: 'from-[#C8F547]/10 to-[#C8F547]/5',
-      description: 'RAG strategy catalog with auto-recommendation. 6 strategies from simple vector search to autonomous multi-step reasoning.',
+      description:
+        'Two-engine product surface with AI-guided selection. LightRAG covers fast mixed-document retrieval, while GraphRAG handles relationship-heavy reasoning.',
       stats: [
-        { label: 'Strategies', value: String(STRATEGIES.length) },
+        { label: 'Engines', value: String(STRATEGIES.length) },
         { label: 'Auto-Select', value: 'AI Advisor' },
       ],
       action: { label: 'Open Advisor', path: '/intelligence' },
@@ -87,11 +94,12 @@ export default function DashboardPage() {
       icon: '\u2699\uFE0F',
       color: '#38BDF8',
       gradient: 'from-[#38BDF8]/10 to-[#38BDF8]/5',
-      description: 'RAG runtime — embeddings, vector store, LLM inference. Auto-detects hardware and recommends optimal configuration.',
+      description:
+        'Production runtime for embeddings, vector search, graph traversal, and LLM inference. TurboQuant controls make the deployment profile easier to tune for latency and cost.',
       stats: [
         { label: 'Embedding', value: 'MiniLM-L6-v2' },
         { label: 'Services', value: `${serviceCount}/4 online` },
-        { label: 'Quantization', value: 'Binary (32x)' },
+        { label: 'Quantization', value: 'TurboQuant-ready' },
       ],
     },
     {
@@ -100,7 +108,8 @@ export default function DashboardPage() {
       icon: '\uD83E\uDD16',
       color: '#8B5CF6',
       gradient: 'from-[#8B5CF6]/10 to-[#8B5CF6]/5',
-      description: 'Background workers for document ingestion, indexing, and pipeline orchestration. Automated document processing.',
+      description:
+        'Background workers for document ingestion, indexing, and pipeline orchestration. Automated processing keeps new collections ready for querying.',
       stats: [
         { label: 'Documents', value: loading ? '...' : String(stats.documentsCount) },
         { label: 'Collections', value: loading ? '...' : String(stats.collectionsCount) },
@@ -113,7 +122,8 @@ export default function DashboardPage() {
       icon: '\uD83D\uDD27',
       color: '#F97316',
       gradient: 'from-[#F97316]/10 to-[#F97316]/5',
-      description: 'MCP integration, CLI tools, semantic document memory. Connect from Claude Desktop, terminal, or any MCP client.',
+      description:
+        'Operational tooling around the retrieval core: MCP integration, CLI access, and ReasoningBank memory so the system can reuse retrieval lessons between tasks.',
       stats: [
         { label: 'MCP Tools', value: '6' },
         { label: 'CLI Commands', value: '8' },
@@ -125,7 +135,8 @@ export default function DashboardPage() {
       icon: '\uD83D\uDCC8',
       color: '#2DD4A8',
       gradient: 'from-[#2DD4A8]/10 to-[#2DD4A8]/5',
-      description: 'Trace-based quality learning. Every query generates a pipeline trace — analyze, compare, and optimize your RAG pipeline.',
+      description:
+        'Trace-based quality learning for the two core engines. Every query leaves a pipeline trace you can inspect, compare, and optimize.',
       stats: [
         { label: 'Pipeline Traces', value: 'Active' },
         { label: 'Debugger', value: 'Real-time' },
@@ -136,102 +147,96 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl py-6">
-      {/* Hero */}
       <section className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-serpent-text">
           Command Center
         </h1>
         <p className="mt-1.5 text-sm text-serpent-text-muted">
-          5-primitive architecture for intelligent document processing
+          Market-ready document intelligence built around LightRAG and GraphRAG
         </p>
       </section>
 
-      {/* 5 Primitive Cards */}
-      <section className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {primitives.map((p) => (
+      <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {primitives.map((primitive) => (
           <div
-            key={p.id}
-            className={`group rounded-xl border border-serpent-border-light bg-gradient-to-br ${p.gradient} p-5 transition-all hover:border-serpent-border-hover hover:shadow-lg cursor-default`}
+            key={primitive.id}
+            className={`group rounded-xl border border-serpent-border-light bg-gradient-to-br ${primitive.gradient} p-5 transition-all hover:border-serpent-border-hover hover:shadow-lg cursor-default`}
           >
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl">{p.icon}</span>
+            <div className="mb-3 flex items-center gap-3">
+              <span className="text-2xl">{primitive.icon}</span>
               <div>
-                <h3 className="text-sm font-semibold" style={{ color: p.color }}>
-                  {p.name}
+                <h3 className="text-sm font-semibold" style={{ color: primitive.color }}>
+                  {primitive.name}
                 </h3>
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-xs text-serpent-text-tertiary leading-relaxed mb-4">
-              {p.description}
+            <p className="mb-4 text-xs leading-relaxed text-serpent-text-tertiary">
+              {primitive.description}
             </p>
 
-            {/* Stats */}
-            <div className="flex gap-4 mb-4">
-              {p.stats.map((s) => (
-                <div key={s.label}>
-                  <p className="text-[10px] uppercase tracking-wider text-serpent-text-dim">{s.label}</p>
-                  <p className="text-sm font-medium text-serpent-text">{s.value}</p>
+            <div className="mb-4 flex gap-4">
+              {primitive.stats.map((stat) => (
+                <div key={stat.label}>
+                  <p className="text-[10px] uppercase tracking-wider text-serpent-text-dim">
+                    {stat.label}
+                  </p>
+                  <p className="text-sm font-medium text-serpent-text">{stat.value}</p>
                 </div>
               ))}
             </div>
 
-            {/* Action */}
-            {p.action && (
+            {primitive.action && (
               <button
-                onClick={() => navigate(p.action!.path)}
-                className="text-xs font-medium px-3 py-1.5 rounded-md border transition-colors"
+                onClick={() => navigate(primitive.action!.path)}
+                className="rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
-                  color: p.color,
-                  borderColor: `${p.color}30`,
+                  color: primitive.color,
+                  borderColor: `${primitive.color}30`,
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = `${p.color}15`;
+                onMouseEnter={(event) => {
+                  event.currentTarget.style.backgroundColor = `${primitive.color}15`;
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                {p.action.label} →
+                {primitive.action.label} {'\u2192'}
               </button>
             )}
           </div>
         ))}
       </section>
 
-      {/* Quick Actions */}
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-medium text-serpent-text-secondary uppercase tracking-wider">
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-serpent-text-secondary">
           Quick Actions
         </h2>
         <div className="flex flex-wrap gap-3">
           <ActionButton label="Ask Your Documents" onClick={() => navigate('/chat')} primary />
           <ActionButton label="Upload Documents" onClick={() => navigate('/documents')} />
-          <ActionButton label="Compare Strategies" onClick={() => navigate('/compare')} />
-          <ActionButton label="AI Strategy Advisor" onClick={() => navigate('/intelligence')} />
+          <ActionButton label="Compare Engines" onClick={() => navigate('/compare')} />
+          <ActionButton label="AI Engine Advisor" onClick={() => navigate('/intelligence')} />
         </div>
       </section>
 
-      {/* Strategy Quick Select */}
       <section>
-        <h2 className="mb-3 text-sm font-medium text-serpent-text-secondary uppercase tracking-wider">
-          Strategies — click to start a chat
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-serpent-text-secondary">
+          Engines - click to start a chat
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-          {STRATEGIES.map((s) => (
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {STRATEGIES.map((strategy) => (
             <button
-              key={s.id}
+              key={strategy.id}
               onClick={() => {
-                setSelectedStrategy(s.id as RAGStrategy);
+                setSelectedStrategy(strategy.id as RAGStrategy);
                 navigate('/chat');
               }}
               className="flex flex-col items-center gap-1.5 rounded-lg border border-serpent-border-light bg-serpent-surface p-3 text-center transition-all hover:border-serpent-border-hover hover:bg-serpent-surface-hover"
             >
-              <span className="text-xl">{s.icon}</span>
-              <span className="text-xs font-medium text-serpent-text">{s.name}</span>
-              <span className="text-[10px] text-serpent-text-dim">{s.latency}</span>
+              <span className="text-xl">{strategy.icon}</span>
+              <span className="text-xs font-medium text-serpent-text">{strategy.name}</span>
+              <span className="text-[10px] text-serpent-text-dim">{strategy.latency}</span>
             </button>
           ))}
         </div>
@@ -239,8 +244,6 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-/* ── Action Button ─────────────────────────────────── */
 
 function ActionButton({
   label,

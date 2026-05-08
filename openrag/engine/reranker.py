@@ -1,7 +1,6 @@
 """Reranker service — cross-encoder and ColBERT reranking."""
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger("openrag.reranker")
 

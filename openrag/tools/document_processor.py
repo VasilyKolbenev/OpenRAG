@@ -4,14 +4,12 @@ Document processing service — parse, chunk, embed, store, extract entities.
 
 import json
 import logging
-import os
 import uuid
 from pathlib import Path
 from typing import Callable, Optional
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from openrag.config import settings
 from openrag.engine.embedding import EmbeddingService
 from openrag.tools.vector_store import QdrantService
 

@@ -94,3 +94,54 @@ class TestGetCurrentUser:
             token = AuthService.create_token("user-1")
             result = await get_current_user(authorization=f"Bearer {token}")
             assert result["sub"] == "user-1"
+
+
+class TestLoginEndpoint:
+    """POST /auth/login -> exchange admin password for JWT."""
+
+    @pytest.mark.asyncio
+    async def test_login_returns_token_with_correct_password(self, client):
+        with patch(
+            "app.api.v1.auth.settings",
+            **{
+                "admin_password": "demo-strong-password",
+                "jwt_expire_hours": 24,
+            },
+        ), patch(
+            "app.dependencies.settings",
+            **{
+                "jwt_secret": JWT_SECRET,
+                "jwt_algorithm": JWT_ALGORITHM,
+                "jwt_expire_hours": 24,
+            },
+        ):
+            response = await client.post(
+                "/auth/login",
+                json={"password": "demo-strong-password"},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["token_type"] == "bearer"
+            assert data["expires_in_hours"] == 24
+            assert isinstance(data["access_token"], str) and data["access_token"]
+
+    @pytest.mark.asyncio
+    async def test_login_rejects_wrong_password(self, client):
+        with patch(
+            "app.api.v1.auth.settings",
+            **{"admin_password": "demo-strong-password"},
+        ):
+            response = await client.post(
+                "/auth/login",
+                json={"password": "wrong-password"},
+            )
+            assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_login_disabled_when_admin_password_unset(self, client):
+        with patch("app.api.v1.auth.settings", **{"admin_password": ""}):
+            response = await client.post(
+                "/auth/login",
+                json={"password": "anything"},
+            )
+            assert response.status_code == 503

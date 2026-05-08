@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     advisor,
+    auth,
     collections,
     documents,
     graph,
@@ -21,6 +22,9 @@ api_router = APIRouter()
 
 # Health (no prefix)
 api_router.include_router(health.router)
+
+# Auth (password -> JWT)
+api_router.include_router(auth.router)
 
 # V1 endpoints
 api_router.include_router(query.router)

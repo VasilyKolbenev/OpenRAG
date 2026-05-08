@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Serpent RAG — Starting ==="
+echo "=== OpenRAG — Starting ==="
 
 # Ensure Python can find the app module
 export PYTHONPATH="/app:${PYTHONPATH}"

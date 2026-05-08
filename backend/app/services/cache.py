@@ -110,6 +110,44 @@ class RedisService:
         key = f"openrag:memo:{collection}:memory"
         await self._client.setex(key, ttl, memory)
 
+    # -- ReasoningBank --
+
+    async def get_reasoning_bank(
+        self, collection: str, strategy: str
+    ) -> list[dict]:
+        """Load remembered retrieval lessons for a strategy/collection pair."""
+        key = f"openrag:reasoning_bank:{strategy}:{collection}"
+        data = await self._client.get(key)
+        if not data:
+            return []
+        try:
+            parsed = json.loads(data)
+        except json.JSONDecodeError:
+            logger.warning("Failed to decode ReasoningBank payload for key=%s", key)
+            return []
+        return parsed if isinstance(parsed, list) else []
+
+    async def append_reasoning_bank(
+        self,
+        collection: str,
+        strategy: str,
+        entry: dict,
+        ttl: int = 604800,
+        max_items: int = 96,
+    ) -> None:
+        """Append a retrieval lesson while keeping the bank bounded."""
+        key = f"openrag:reasoning_bank:{strategy}:{collection}"
+        existing = await self.get_reasoning_bank(collection, strategy)
+        signature = entry.get("signature")
+        if signature:
+            existing = [item for item in existing if item.get("signature") != signature]
+        existing.append(entry)
+        await self._client.setex(
+            key,
+            ttl,
+            json.dumps(existing[-max_items:], default=str),
+        )
+
     # ── Advisor Sessions ──
 
     async def get_advisor_session(

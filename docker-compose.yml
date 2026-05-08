@@ -22,11 +22,11 @@ services:
   # ── Backend API (FastAPI) ──────────────────────────
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: openrag-api
     restart: unless-stopped
-    command: ["uvicorn", "openrag.server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
     stop_signal: SIGINT
     stop_grace_period: 30s
     environment:
@@ -72,11 +72,11 @@ services:
   # ── RAG Worker (Celery) ────────────────────────────
   worker:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: openrag-worker
     restart: unless-stopped
-    command: celery -A openrag.workers.celery_app:celery_app worker -l info -c 2 -Q ingest,evaluate
+    command: celery -A app.workers.celery_app:celery_app worker -l info -c 2 -Q ingest,evaluate
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-openrag}:${POSTGRES_PASSWORD:-openrag123}@postgres:5432/${POSTGRES_DB:-openrag}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0

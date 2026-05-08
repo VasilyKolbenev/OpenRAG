@@ -197,60 +197,64 @@ function getLocalRecommendation(
   answers: Record<string, string>,
 ): AdvisorResult[] {
   const scores: Record<string, number> = {
-    agentic: 0,
+    lightrag: 0,
     graph: 0,
-    hybrid: 0,
-    naive: 0,
   };
 
-  if (
-    answers.complexity === 'Multi-step reasoning needed' ||
-    answers.complexity === 'Complex analytical workflows'
-  ) {
-    scores.agentic += 3;
+  if (answers.complexity === 'Direct answers from long documents') {
+    scores.lightrag += 3;
+  }
+  if (answers.complexity === 'Questions that connect many related facts') {
+    scores.graph += 2;
+    scores.lightrag += 1;
+  }
+  if (answers.complexity === 'Mixed fact + thematic exploration') {
+    scores.lightrag += 2;
     scores.graph += 1;
   }
-  if (answers.complexity === 'Requires connecting multiple sources') {
-    scores.agentic += 2;
-    scores.graph += 2;
+  if (answers.complexity === 'Audit-style or investigative queries') {
+    scores.graph += 3;
   }
-  if (answers.complexity === 'Simple factual lookups') {
-    scores.naive += 3;
-    scores.hybrid += 1;
+  if (answers.data === 'Mostly text, tables, and mixed documents') {
+    scores.lightrag += 3;
   }
-  if (answers.data === 'Structured with entity relationships') scores.graph += 3;
-  if (answers.data === 'Flat documents (PDFs, text)') {
-    scores.hybrid += 2;
-    scores.naive += 1;
+  if (answers.data === 'Entity-heavy data with explicit relationships') {
+    scores.graph += 3;
   }
-  if (answers.data === 'Mixed structured & unstructured') {
-    scores.hybrid += 2;
-    scores.agentic += 1;
+  if (answers.data === 'Multimodal corpora that change often') {
+    scores.lightrag += 2;
+    scores.graph += 1;
+  }
+  if (answers.data === 'A curated graph or ontology already exists') {
+    scores.graph += 3;
   }
   if (
     answers.domain === 'Legal / Compliance' ||
     answers.domain === 'Medical / Healthcare'
   ) {
     scores.graph += 2;
-    scores.agentic += 1;
   }
-  if (answers.domain === 'Customer Support') {
-    scores.hybrid += 2;
-    scores.naive += 1;
-  }
-  if (answers.domain === 'Research / Academic') scores.agentic += 2;
-  if (answers.priority === 'Speed / Low latency') {
-    scores.naive += 2;
-    scores.hybrid += 1;
-  }
-  if (answers.priority === 'Maximum accuracy') {
-    scores.agentic += 2;
+  if (answers.domain === 'Research / Academic') scores.graph += 2;
+  if (answers.domain === 'Enterprise / Operations') scores.lightrag += 2;
+  if (answers.domain === 'Technical / Engineering') {
+    scores.lightrag += 2;
     scores.graph += 1;
   }
-  if (answers.priority === 'Cost efficiency') scores.naive += 2;
-  if (answers.priority === 'Explainability / Transparency') {
+  if (answers.domain === 'Customer Support') {
+    scores.lightrag += 3;
+  }
+  if (answers.priority === 'Predictable speed') {
+    scores.lightrag += 3;
+  }
+  if (answers.priority === 'Balanced default') {
+    scores.lightrag += 2;
+    scores.graph += 1;
+  }
+  if (answers.priority === 'Explainability / lineage') {
+    scores.graph += 3;
+  }
+  if (answers.priority === 'Maximum relationship accuracy') {
     scores.graph += 2;
-    scores.agentic += 1;
   }
 
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);

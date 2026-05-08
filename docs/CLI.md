@@ -1,168 +1,97 @@
 # OpenRAG CLI Reference
 
-## Installation
+The package and command name are `openrag`. The CLI is a thin wrapper over the
+REST API.
+
+## Install
 
 ```bash
 pip install openrag
 ```
 
-Requires Python 3.12+.
-
-## Commands
+## Core Commands
 
 ### `openrag init`
 
-Interactive first-run wizard. Creates `.env` file and configures LLM provider.
-
-```bash
-openrag init
-```
-
-Prompts for:
-- LLM provider (OpenAI, Anthropic, Ollama)
-- API keys
-- Embedding model preference
-- Optional services (Neo4j, monitoring stack)
-
-### `openrag serve`
-
-Start the API server directly (without Docker).
-
-```bash
-openrag serve
-openrag serve --host 0.0.0.0 --port 8000 --reload
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--host` | `127.0.0.1` | Bind address |
-| `--port` | `8000` | Bind port |
-| `--reload` | off | Auto-reload on code changes |
-| `--workers` | `1` | Number of Uvicorn workers |
+Creates local configuration and walks through provider setup.
 
 ### `openrag up`
 
-Start all services via Docker Compose.
+Starts the platform with Docker Compose.
 
 ```bash
-openrag up           # Development mode (7 services)
-openrag up --prod    # Production mode (+ Traefik, OTel, Prometheus, Grafana)
-openrag up -d        # Detached mode
+openrag up
+openrag up --prod
 ```
 
 ### `openrag down`
 
-Stop all services.
-
-```bash
-openrag down
-openrag down -v      # Also remove volumes
-```
+Stops the platform services.
 
 ### `openrag query`
 
-Execute a RAG query from the command line.
+Runs a single engine query.
 
 ```bash
-openrag query "What is retrieval augmented generation?"
-openrag query "Explain vector search" -s hybrid
-openrag query "Find related entities" -s graph -c my-docs --top-k 10
+openrag query "Summarize the main findings" -s lightrag
+openrag query "Trace every counterparty obligation" -s agentic
+openrag query "List related entities and obligations" -s graph -c legal
 ```
 
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--strategy` | `-s` | `hybrid` | RAG strategy to use |
-| `--collection` | `-c` | `default` | Target collection |
-| `--top-k` | `-k` | `5` | Number of chunks to retrieve |
-| `--model` | `-m` | (config default) | LLM model override |
-| `--json` | | off | Output raw JSON response |
+Canonical engine values:
+
+- `lightrag`
+- `agentic`
+- `graph`
 
 ### `openrag compare`
 
-A/B compare multiple strategies on the same query.
+Runs the same question through two or three canonical engines.
 
 ```bash
-openrag compare "Explain chunking" -s naive -s hybrid
-openrag compare "What are embeddings?" -s naive -s hybrid -s graph -c research
+openrag compare "What changed in the renewal clause?" -s lightrag -s graph
+openrag compare "Trace renewal obligations" -s lightrag -s agentic -s graph
 ```
 
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--strategy` | `-s` | (required, 2+) | Strategies to compare (repeat flag) |
-| `--collection` | `-c` | `default` | Target collection |
-| `--json` | | off | Output raw JSON |
+The compare endpoint accepts between two and three strategies.
 
 ### `openrag upload`
 
-Upload documents for processing.
+Uploads files or directories for ingestion.
 
 ```bash
 openrag upload ./report.pdf
-openrag upload ./docs/ -c research
-openrag upload ./data.csv --chunk-size 512
+openrag upload ./docs -c research
 ```
-
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--collection` | `-c` | `default` | Target collection |
-| `--chunk-size` | | `1000` | Chunk size in tokens |
-| `--chunk-overlap` | | `200` | Overlap between chunks |
-
-Supported formats: PDF, DOCX, TXT, MD, CSV.
 
 ### `openrag status`
 
-Check health of all services.
-
-```bash
-openrag status
-```
-
-Output:
-```
-OpenRAG Status
-  API:        healthy (http://localhost:8000)
-  PostgreSQL: healthy
-  Redis:      healthy
-  Qdrant:     healthy
-  Neo4j:      degraded (optional, Graph RAG disabled)
-```
+Shows service health.
 
 ### `openrag strategies`
 
-List available RAG strategies with metadata.
-
-```bash
-openrag strategies
-openrag strategies --json
-```
+Lists the active engines exposed by the API.
 
 ### `openrag traces`
 
-View a pipeline trace (RAG Debugger).
-
-```bash
-openrag traces <trace-id>
-openrag traces abc-123-def --json
-```
+Fetches a pipeline trace by id.
 
 ### `openrag mcp`
 
-Start the MCP server for integration with Claude Desktop and other MCP clients.
+Starts the MCP server for external agent clients.
 
-```bash
-openrag mcp
-```
+## Compatibility Note
 
-Uses stdio transport. See [MCP.md](MCP.md) for configuration details.
+Legacy strategy ids may still work against the backend, but new scripts should
+only emit canonical ids:
+
+- `lightrag`
+- `agentic`
+- `graph`
 
 ## Environment Variables
 
-The CLI respects the following environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OPENRAG_API_URL` | `http://localhost:8000` | API base URL |
-| `OPENRAG_API_KEY` | (none) | API key for authenticated requests |
-
-These can also be set in a `.env` file in the current directory or via `openrag init`.
+| Variable | Purpose |
+|---|---|
+| `OPENRAG_API_URL` | API base URL |
+| `OPENRAG_API_KEY` | Bearer JWT used in the `Authorization` header when auth is enabled |

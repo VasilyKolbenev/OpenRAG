@@ -1,42 +1,39 @@
 """
-Tests for strategy endpoints — GET /strategies, POST /recommend.
+Tests for strategy endpoints -> GET /strategies, POST /recommend.
 """
 
 from httpx import AsyncClient
 
 
 class TestStrategiesEndpoint:
-    """GET /strategies — list all strategies."""
+    """GET /strategies -> list focused product engines."""
 
-    async def test_list_strategies_returns_all_four(self, client: AsyncClient):
+    async def test_list_strategies_returns_three_engines(self, client: AsyncClient):
         response = await client.get("/strategies")
         assert response.status_code == 200
         data = response.json()
         assert "strategies" in data
         strategies = data["strategies"]
-        assert len(strategies) == 6
-        ids = [s["id"] for s in strategies]
-        assert "naive" in ids
-        assert "hybrid" in ids
-        assert "graph" in ids
+        assert len(strategies) == 3
+        ids = [strategy["id"] for strategy in strategies]
+        assert "lightrag" in ids
         assert "agentic" in ids
-        assert "memo" in ids
-        assert "corrective" in ids
+        assert "graph" in ids
 
     async def test_strategy_info_has_required_fields(self, client: AsyncClient):
         response = await client.get("/strategies")
         data = response.json()
-        for s in data["strategies"]:
-            assert "id" in s
-            assert "name" in s
-            assert "description" in s
-            assert "complexity" in s
-            assert "latency" in s
-            assert "accuracy" in s
+        for strategy in data["strategies"]:
+            assert "id" in strategy
+            assert "name" in strategy
+            assert "description" in strategy
+            assert "complexity" in strategy
+            assert "latency" in strategy
+            assert "accuracy" in strategy
 
 
 class TestRecommendEndpoint:
-    """POST /recommend — strategy recommendation."""
+    """POST /recommend -> strategy recommendation."""
 
     async def test_recommend_returns_strategy(self, client: AsyncClient):
         response = await client.post(
@@ -51,10 +48,8 @@ class TestRecommendEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert "recommended" in data
-        assert data["recommended"] in (
-            "naive", "hybrid", "graph", "agentic", "memo", "corrective"
-        )
+        assert data["recommended"] in ("lightrag", "agentic", "graph")
         assert "scores" in data
         assert "reasoning" in data
         assert isinstance(data["scores"], dict)
-        assert len(data["scores"]) == 6
+        assert len(data["scores"]) == 3

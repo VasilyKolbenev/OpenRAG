@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────
-# SERPENT RAG PLATFORM — Backend Dockerfile
+# OpenRAG Platform — Backend Dockerfile
 # Multi-stage build with security hardening
 # ─────────────────────────────────────────────
 

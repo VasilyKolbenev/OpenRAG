@@ -10,7 +10,6 @@ Each retrieved document is graded by the LLM for relevance (0-1).
 
 import json
 import logging
-from typing import Optional
 
 import httpx
 

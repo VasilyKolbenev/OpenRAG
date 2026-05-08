@@ -1,182 +1,102 @@
 # OpenRAG Architecture
 
-## 5-Primitive Model
+## Overview
 
-OpenRAG is built on 5 primitives. Each RAG strategy is a unique composition of these primitives.
+OpenRAG keeps the existing 5-primitive platform framing, with the active
+product surface now centered on three canonical retrieval engines:
 
-| # | Primitive | Responsibility | Key Components |
-|---|-----------|---------------|----------------|
-| 1 | **Intelligence** | Strategy catalog, AI advisor, auto-recommendation | StrategyFactory, AdvisorService, 6 RAG strategies |
-| 2 | **Engine** | Embedding, vector store, LLM inference runtime | EmbeddingService, LLMService, VectorStore, GraphStore |
-| 3 | **Agents** | Background document processing, pipeline orchestration | Celery workers, DocumentProcessor, Evaluator |
-| 4 | **Tools & Memory** | MCP integration, CLI, semantic memory, connectors | MCP Server (6 tools), Typer CLI (8 commands), Redis cache |
-| 5 | **Learning** | Pipeline tracing, quality analysis, feedback loop | TracingService, EvaluationService, RAG Debugger |
+- `LightRAG`
+- `AgenticRAG`
+- `GraphRAG`
 
-## RAG Strategies
+Everything else is treated as legacy compatibility or internal scaffolding.
 
-Each strategy composes the 5 primitives differently:
+## 5 Primitives
 
-| Strategy | Retrieve | Reason | Generate | Special |
-|----------|----------|--------|----------|---------|
-| **Simple (naive)** | Vector search | — | LLM | Fastest, simplest |
-| **Hybrid** | Vector + BM25 + reranker | Fusion scoring | LLM | Best general-purpose |
-| **Graph** | Graph traversal + vector | Entity reasoning | LLM | Requires Neo4j |
-| **Agentic** | Multi-step retrieval | Planning + reflection | LLM | Autonomous agent loop |
-| **MemoRAG** | Clue-guided retrieval | Memory → clues | Light + Heavy LLM | Global collection memory |
-| **Corrective** | Vector + grading | Relevance scoring | LLM | Web search fallback |
+| Primitive | Responsibility | Active components |
+|---|---|---|
+| Intelligence | Engine selection, advisor, compare, canonical strategy routing | `backend/app/strategies`, `backend/app/api/v1/strategies.py`, advisor flows |
+| Engine | Retrieval runtime, embeddings, graph access, reranking, generation | Qdrant, Neo4j, LiteLLM, vector store, graph store |
+| Agents | Background ingestion and indexing | document workers, upload pipeline |
+| Tools & Memory | Cache, sessions, MCP, CLI, retrieval memory | Redis, ReasoningBank helper, CLI, MCP |
+| Learning | Pipeline traces, metrics, comparison feedback loop | tracing, quality dashboard, compare view |
 
-## Data Flow
+## Canonical Engines
 
-```
-User Query
-    │
-    ▼
-┌──────────┐     ┌────────────┐     ┌────────────┐
-│ API Layer │────▶│ Orchestrator│────▶│  Strategy   │
-│ (FastAPI) │     │  (Factory)  │     │ (selected)  │
-└──────────┘     └────────────┘     └──────┬─────┘
-                                           │
-                      ┌────────────────────┼────────────────────┐
-                      ▼                    ▼                    ▼
-                ┌──────────┐       ┌──────────────┐     ┌────────────┐
-                │ Retrieve │       │    Reason     │     │  Generate  │
-                │ (vector  │       │ (judge, plan, │     │ (LLM call, │
-                │  search) │       │  grade docs)  │     │  stream)   │
-                └──────────┘       └──────────────┘     └────────────┘
-                      │                    │                    │
-                      ▼                    ▼                    ▼
-                ┌──────────┐       ┌──────────────┐     ┌────────────┐
-                │  Qdrant  │       │   LiteLLM    │     │  Response  │
-                │  Neo4j   │       │  (grading)   │     │  + Trace   │
-                └──────────┘       └──────────────┘     └────────────┘
-```
+| Engine | Retrieval pattern | Specialization | Runtime notes |
+|---|---|---|---|
+| `lightrag` | Dense + sparse retrieval with reranking hooks | Default for mixed documents and fast Q&A | Uses ReasoningBank recall and TurboQuant controls |
+| `agentic` | Plan → retrieve → reflect → answer with tool selection | Investigative, multi-hop, research-grade workloads | Iterative loop, optional graph tool fallback |
+| `graph` | Graph traversal plus supporting vector context | Entity links, lineage, and explainability | Uses ReasoningBank recall and adaptive hop expansion |
 
-Every query generates a pipeline trace (accessible via `GET /api/traces/{id}`).
+## Optimizer Layer
 
-## Directory Structure
+The platform exposes optimizers as cross-engine capabilities rather than
+separate strategies.
 
-```
-openrag/                        # Python package (5-primitive backend)
-├── __init__.py
-├── config.py                   # pydantic-settings configuration
-├── server.py                   # FastAPI app factory + lifespan + seed
-├── dependencies.py             # Auth dependencies (API key + JWT)
-├── api/                        # API Layer
-│   ├── router.py               # Main router aggregator
-│   └── v1/                     # Versioned endpoints
-│       ├── health.py           # GET /api/health
-│       ├── query.py            # POST /api/query, POST /api/query/stream
-│       ├── documents.py        # Document upload + CRUD
-│       ├── collections.py      # Vector collection management
-│       ├── strategies.py       # GET /api/strategies
-│       ├── traces.py           # Pipeline trace viewer
-│       ├── compare.py          # POST /api/compare
-│       ├── graph.py            # Graph explorer
-│       ├── metrics.py          # Quality metrics
-│       └── advisor.py          # AI strategy advisor
-├── intelligence/               # Primitive 1: Intelligence
-│   ├── strategies/             # 6 RAG strategy implementations
-│   │   ├── base.py             # BaseRAGStrategy (abstract)
-│   │   ├── factory.py          # Strategy registry + factory
-│   │   ├── naive.py            # Simple vector search
-│   │   ├── hybrid.py           # Keyword + semantic + reranking
-│   │   ├── graph_rag.py        # Neo4j graph traversal
-│   │   ├── agentic.py          # Multi-step reasoning agent
-│   │   ├── memo_rag.py         # Dual-system memory RAG
-│   │   └── corrective.py       # Document grading + web fallback
-│   └── advisor.py              # AI strategy recommendation
-├── engine/                     # Primitive 2: Engine
-│   ├── embedding.py            # Sentence-transformers (MiniLM-L6-v2)
-│   ├── llm.py                  # LiteLLM wrapper (OpenAI, Anthropic, Ollama)
-│   ├── vector_store.py         # Qdrant client
-│   └── graph_store.py          # Neo4j client (optional)
-├── agents/                     # Primitive 3: Agents
-│   ├── evaluator.py            # Quality evaluation agent
-│   └── workers/                # Celery background tasks
-│       └── celery_app.py       # Document processing workers
-├── tools/                      # Primitive 4: Tools & Memory
-│   ├── mcp_server.py           # MCP server (6 tools, stdio transport)
-│   └── cli.py                  # Typer CLI (8 commands)
-├── learning/                   # Primitive 5: Learning
-│   ├── tracing.py              # Pipeline trace recording
-│   ├── evaluation.py           # RAGAS metrics
-│   ├── analytics.py            # Usage analytics
-│   └── feedback.py             # User feedback collection
-├── services/                   # Shared services
-│   ├── cache.py                # Redis cache
-│   └── document_processor.py   # Parse, chunk, embed pipeline
-├── models/                     # SQLAlchemy ORM models
-├── schemas/                    # Pydantic request/response schemas
-└── middleware/                 # Logging, telemetry, tenant isolation
+| Optimizer | Backend location | Current behavior |
+|---|---|---|
+| ReasoningBank-style memory | `backend/app/services/reasoning_bank.py` | Stores and recalls short lessons from prior attempts |
+| TurboQuant controls | query schema + strategy runtime parameters | Lets callers tune a quantization-style runtime profile |
 
-frontend/                       # React 18 + TypeScript + Tailwind CSS
-├── src/
-│   ├── pages/
-│   │   ├── DashboardPage.tsx   # Command Center (5-primitive cards)
-│   │   ├── IntelligencePage.tsx # AI Advisor + Strategy Catalog
-│   │   ├── ChatPage.tsx        # Query interface with streaming
-│   │   ├── DocumentsPage.tsx   # Document management
-│   │   ├── DebuggerPage.tsx    # Pipeline trace viewer
-│   │   └── ComparePage.tsx     # A/B strategy comparison
-│   ├── components/             # Reusable React components
-│   ├── stores/                 # Zustand state management
-│   ├── hooks/                  # Custom hooks (useStreamQuery)
-│   └── lib/                    # API client, constants, utilities
-└── package.json
+## Query Flow
 
-seed/                           # Demo documents for first launch
-docs/                           # Documentation
-infra/                          # Infrastructure configs (Prometheus, Grafana, OTel)
-tests/                          # pytest test suite (211 tests)
+1. The API receives a request with `strategy` set to `lightrag`, `agentic`, `graph`, or a legacy alias.
+2. `StrategyFactory` canonicalizes the request to one of the three engines.
+3. The selected engine retrieves context, optionally consulting ReasoningBank memory.
+4. The engine generates an answer and records a trace.
+5. Outcome metadata is written back so future runs can reuse retrieval lessons.
+
+## Canonicalization Rules
+
+For migration safety, the backend still accepts legacy ids:
+
+- `hybrid`, `naive`, `memo`, `wiki` → `lightrag`
+- `corrective` → `graph`
+- `agentic` is canonical (no longer aliased)
+
+The UI shows only the three canonical engine names.
+
+## Active Code Layout
+
+```text
+backend/
+  app/
+    api/v1/              # query, compare, advisor, strategies
+    schemas/             # request/response models
+    services/            # cache, tracing, reasoning_bank
+    strategies/          # LightRAG, AgenticRAG, GraphRAG, factory, advisor
+    workers/             # ingestion and background tasks
+  tests/                 # backend test suite
+
+frontend/
+  src/
+    components/          # compare, advisor, chat, debugger, layout
+    lib/                 # constants, API client
+    pages/               # dashboard, intelligence, chat, compare
+    stores/              # persisted UI state
+    types/               # API and UI models
+
+openrag/                 # legacy package and CLI compatibility surface
+docs/                    # product and developer documentation
 ```
 
-## UI Architecture (5-Primitive Mapping)
+## Product Surface vs Legacy Surface
 
-| Page | Route | Primitive | Purpose |
-|------|-------|-----------|---------|
-| Command Center | `/dashboard` | All 5 | Overview with primitive cards |
-| AI Advisor | `/intelligence` | Intelligence | Strategy recommendation + catalog |
-| Chat | `/chat` | Intelligence | Query with streaming |
-| Compare | `/compare` | Intelligence | A/B strategy testing |
-| Documents | `/documents` | Agents | Document ingest + management |
-| Debugger | `/debugger` | Learning | Pipeline trace analysis |
+The repo still contains older strategy implementations and legacy package code,
+but the active product surface is defined by:
 
-## Key Design Decisions
+- `GET /api/strategies`
+- `POST /api/query`
+- `POST /api/compare`
+- the React UI in `frontend/src`
 
-1. **Strategy pattern**: All RAG strategies inherit from `BaseRAGStrategy` and are registered in a factory. The API layer is strategy-agnostic.
+Those surfaces present only `LightRAG`, `AgenticRAG`, and `GraphRAG`.
 
-2. **Tracing by default**: Every strategy execution records a pipeline trace with step-level timing. This powers the RAG Debugger without opt-in.
+## Design Decisions
 
-3. **Graceful degradation**: Neo4j is optional. If unavailable, Graph RAG is disabled but all other strategies work.
-
-4. **LiteLLM abstraction**: All LLM calls go through LiteLLM — switch between OpenAI, Anthropic, and Ollama with a config change.
-
-5. **Local embeddings**: all-MiniLM-L6-v2 (384 dims, ~80 MB) runs locally. No external API calls for embedding.
-
-6. **Async throughout**: FastAPI + async Qdrant/Neo4j clients. Celery workers bridge to async via `asyncio.run()`.
-
-7. **MCP as first-class interface**: The MCP server exposes the same capabilities as the REST API.
-
-8. **5-Primitive UI**: Dashboard organized around Intelligence/Engine/Agents/Tools/Learning — each card links to its corresponding feature.
-
-## Adding a New Strategy
-
-1. Create `openrag/intelligence/strategies/my_strategy.py`:
-
-```python
-from openrag.intelligence.strategies.base import BaseRAGStrategy
-
-class MyStrategy(BaseRAGStrategy):
-    strategy_id = "my_strategy"
-    name = "My Strategy"
-
-    async def retrieve(self, query: str, top_k: int = 5) -> list[dict]:
-        ...
-
-    async def generate(self, query: str, context: list[dict]) -> str:
-        ...
-```
-
-2. Register in `openrag/intelligence/strategies/factory.py`
-3. Add tests in `tests/test_strategies/`
-4. Strategy auto-appears in `GET /api/strategies` and is available via `POST /api/query`
+1. **Three-engine product**: separate canonical engines for fast retrieval (LightRAG), autonomous research (AgenticRAG), and relationship reasoning (GraphRAG). The advisor and compare flow are built around this triple.
+2. **Backward compatibility**: keep legacy strategy ids valid at the API boundary during migration.
+3. **Reasoning memory as optimizer**: store lessons from failed and successful retrieval attempts without adding a new public strategy.
+4. **TurboQuant as runtime control**: expose deployment tuning without claiming a separate retrieval method.
+5. **Graceful graph fallback**: if Neo4j is unavailable, `GraphRAG` should fail clearly while `LightRAG` and `AgenticRAG` remain available.

@@ -5,14 +5,13 @@ Main RAG query endpoints — sync and streaming.
 import asyncio
 import json
 import logging
-import time
 import uuid
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Request
 from sse_starlette.sse import EventSourceResponse
 from typing import Optional
 
-from openrag.dependencies import get_current_user, require_auth_in_production
+from openrag.dependencies import require_auth_in_production
 from openrag.schemas.query import (
     CompareRequest,
     CompareResponse,

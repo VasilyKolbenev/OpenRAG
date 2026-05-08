@@ -10,7 +10,7 @@ from app.strategies.advisor import recommend_strategy
 class TestRecommendStrategy:
     """recommend_strategy() — rule-based scoring logic."""
 
-    def test_simple_query_recommends_naive(self):
+    def test_simple_query_recommends_lightrag(self):
         req = RecommendationRequest(
             domain="support",
             query_complexity="simple",
@@ -18,8 +18,8 @@ class TestRecommendStrategy:
             priority="speed",
         )
         result = recommend_strategy(req)
-        assert result.recommended == RAGStrategy.NAIVE
-        assert result.scores["naive"] >= result.scores["agentic"]
+        assert result.recommended == RAGStrategy.LIGHTRAG
+        assert result.scores["lightrag"] >= result.scores["agentic"]
 
     def test_complex_query_recommends_agentic(self):
         req = RecommendationRequest(

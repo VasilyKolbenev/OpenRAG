@@ -1,16 +1,19 @@
 """
-Main RAG query endpoints — sync and streaming.
+Main RAG query endpoints -> sync and streaming.
 """
+
+from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
 from sse_starlette.sse import EventSourceResponse
-from typing import Optional
 
+from app.config import settings as app_settings
 from app.dependencies import require_auth_in_production
 from app.schemas.query import (
     CompareRequest,
@@ -20,8 +23,6 @@ from app.schemas.query import (
     QueryResponse,
     SourceInfo,
 )
-
-from app.config import settings as app_settings
 
 logger = logging.getLogger("openrag.query")
 
@@ -39,7 +40,7 @@ async def _load_session(app, user_id: str, session_id: Optional[str]):
 async def _save_session(app, user_id: str, session_id: str, history: list[dict]):
     """Save chat session to Redis with message limit."""
     cache = app.state.cache
-    trimmed = history[-app_settings.max_chat_history_messages:]
+    trimmed = history[-app_settings.max_chat_history_messages :]
     await cache.set_chat_session(user_id, session_id, trimmed)
 
 
@@ -50,61 +51,59 @@ def _get_user_id(current_user: Optional[dict]) -> str:
     return "anonymous"
 
 
+def _build_optimizer_metadata(request: QueryRequest) -> dict:
+    return {
+        "reasoning_bank": request.enable_reasoning_bank,
+        "turboquant": request.turboquant_enabled,
+        "turboquant_bits": request.turboquant_bits,
+    }
+
+
 @router.post("/query", response_model=QueryResponse)
 async def query_documents(
     request: QueryRequest,
     req: Request,
     current_user: Optional[dict] = Depends(require_auth_in_production),
 ):
-    """Main RAG query endpoint — retrieves context and generates answer."""
+    """Main RAG query endpoint -> retrieves context and generates answer."""
     app = req.app
     factory = app.state.strategy_factory
     tracing = app.state.tracing_service
     llm_service = app.state.llm_service
 
-    # Session management
     user_id = _get_user_id(current_user)
     session_id, history = await _load_session(app, user_id, request.session_id)
 
-    # Query rewriting for follow-ups
     retrieval_query = request.query
     if history:
         retrieval_query = await llm_service.rewrite_query(request.query, history)
 
+    canonical_strategy = factory.canonicalize(request.strategy)
     strategy = factory.get(request.strategy)
     trace = tracing.create_recorder(
         query=request.query,
-        strategy=request.strategy.value,
+        strategy=canonical_strategy.value,
         collection=request.collection,
     )
 
-    # Retrieve (use rewritten query for better retrieval)
     context = await strategy.retrieve(
         query=retrieval_query,
         collection=request.collection,
         trace=trace,
         top_k=request.top_k,
-        # Agentic
-        max_iterations=request.max_iterations,
-        enable_planning=request.enable_planning,
-        enable_reflection=request.enable_reflection,
-        # Graph
         max_hops=request.max_hops,
         entity_types=request.entity_types,
-        # Hybrid
+        query_mode=request.query_mode,
         sparse_weight=request.sparse_weight,
         enable_reranking=request.enable_reranking,
         reranker_type=request.reranker_type,
-        # MemoRAG
-        light_model=request.light_model,
-        # CRAG
-        relevance_threshold=request.relevance_threshold,
-        web_search_enabled=request.web_search_enabled,
-        # Document filters
+        enable_reasoning_bank=request.enable_reasoning_bank,
+        reasoning_memory_limit=request.reasoning_memory_limit,
+        turboquant_enabled=request.turboquant_enabled,
+        turboquant_bits=request.turboquant_bits,
         filters=request.filters,
     )
 
-    # Sufficient Context Check
     if request.check_sufficiency and context:
         is_sufficient, score = await strategy.check_context_sufficiency(
             query=request.query,
@@ -120,12 +119,17 @@ async def query_documents(
                     collection=request.collection,
                     trace=trace,
                     top_k=request.top_k * 2,
-                    light_model=request.light_model,
-                    relevance_threshold=request.relevance_threshold,
-                    web_search_enabled=request.web_search_enabled,
+                    max_hops=request.max_hops,
+                    entity_types=request.entity_types,
+                    query_mode=request.query_mode,
                     sparse_weight=request.sparse_weight,
                     enable_reranking=request.enable_reranking,
                     reranker_type=request.reranker_type,
+                    enable_reasoning_bank=request.enable_reasoning_bank,
+                    reasoning_memory_limit=request.reasoning_memory_limit,
+                    turboquant_enabled=request.turboquant_enabled,
+                    turboquant_bits=request.turboquant_bits,
+                    filters=request.filters,
                 )
             elif request.sufficiency_action == "abstain":
                 await tracing.save_trace(
@@ -134,35 +138,44 @@ async def query_documents(
                     answer_length=0,
                     model=request.model,
                 )
+                await strategy.record_outcome(
+                    query=request.query,
+                    collection=request.collection,
+                    trace=trace,
+                    success=False,
+                    context=context,
+                    metadata={"reason": "insufficient_context"},
+                )
                 sources = [
                     SourceInfo(
-                        content=c["content"][:200],
-                        score=c.get("score", 0),
-                        metadata=c.get("metadata", {}),
+                        content=chunk["content"][:200],
+                        score=chunk.get("score", 0),
+                        metadata=chunk.get("metadata", {}),
                     )
-                    for c in context
+                    for chunk in context
                 ]
                 return QueryResponse(
                     answer=(
-                        f"Insufficient context to answer confidently "
+                        "Insufficient context to answer confidently "
                         f"(sufficiency score: {score:.0%}). "
-                        f"Try uploading more relevant documents or rephrasing the query."
+                        "Try uploading more relevant documents or rephrasing the query."
                     ),
                     sources=sources,
-                    strategy_used=request.strategy,
+                    strategy_used=canonical_strategy,
                     metadata={
                         "model": request.model,
                         "top_k": request.top_k,
                         "chunks_retrieved": len(context),
                         "sufficiency_score": score,
                         "abstained": True,
+                        "optimizers": _build_optimizer_metadata(request),
+                        "requested_strategy": request.strategy.value,
                     },
                     latency_ms=trace.total_latency_ms,
                     trace_id=trace.trace_id,
                     session_id=session_id,
                 )
 
-    # Generate (pass conversation history for contextual answers)
     answer = await strategy.generate(
         query=request.query,
         context=context,
@@ -172,37 +185,45 @@ async def query_documents(
         history=history or None,
     )
 
-    # Save trace
     await tracing.save_trace(
         trace,
         chunks_retrieved=len(context),
         answer_length=len(answer),
         model=request.model,
     )
+    await strategy.record_outcome(
+        query=request.query,
+        collection=request.collection,
+        trace=trace,
+        success=bool(context),
+        context=context,
+        metadata={"query_rewritten": retrieval_query != request.query},
+    )
 
-    # Update session history
     history.append({"role": "user", "content": request.query})
     history.append({"role": "assistant", "content": answer})
     await _save_session(app, user_id, session_id, history)
 
     sources = [
         SourceInfo(
-            content=c["content"][:200],
-            score=c.get("score", 0),
-            metadata=c.get("metadata", {}),
+            content=chunk["content"][:200],
+            score=chunk.get("score", 0),
+            metadata=chunk.get("metadata", {}),
         )
-        for c in context
+        for chunk in context
     ]
 
     return QueryResponse(
         answer=answer,
         sources=sources,
-        strategy_used=request.strategy,
+        strategy_used=canonical_strategy,
         metadata={
             "model": request.model,
             "top_k": request.top_k,
             "chunks_retrieved": len(context),
             "query_rewritten": retrieval_query != request.query,
+            "optimizers": _build_optimizer_metadata(request),
+            "requested_strategy": request.strategy.value,
         },
         latency_ms=trace.total_latency_ms,
         trace_id=trace.trace_id,
@@ -222,70 +243,55 @@ async def query_stream(
     tracing = app.state.tracing_service
     llm_service = app.state.llm_service
 
-    # Session management (load before generator to avoid race conditions)
     user_id = _get_user_id(current_user)
     session_id, history = await _load_session(app, user_id, request.session_id)
 
-    # Query rewriting for follow-ups
     retrieval_query = request.query
     if history:
         retrieval_query = await llm_service.rewrite_query(request.query, history)
 
     async def event_generator():
-        # B11: Wrap entire generator in try/except to prevent SSE connection leaks
         try:
+            canonical_strategy = factory.canonicalize(request.strategy)
             strategy = factory.get(request.strategy)
             trace = tracing.create_recorder(
                 query=request.query,
-                strategy=request.strategy.value,
+                strategy=canonical_strategy.value,
                 collection=request.collection,
             )
 
-            # Phase 1: Retrieval (use rewritten query)
             logger.info("Stream query: filters=%s, strategy=%s", request.filters, request.strategy)
-            yield {
-                "event": "status",
-                "data": json.dumps({"phase": "retrieving"}),
-            }
+            yield {"event": "status", "data": json.dumps({"phase": "retrieving"})}
 
             context = await strategy.retrieve(
                 query=retrieval_query,
                 collection=request.collection,
                 trace=trace,
                 top_k=request.top_k,
-                max_iterations=request.max_iterations,
-                enable_planning=request.enable_planning,
-                enable_reflection=request.enable_reflection,
                 max_hops=request.max_hops,
                 entity_types=request.entity_types,
+                query_mode=request.query_mode,
                 sparse_weight=request.sparse_weight,
                 enable_reranking=request.enable_reranking,
                 reranker_type=request.reranker_type,
-                light_model=request.light_model,
-                relevance_threshold=request.relevance_threshold,
-                web_search_enabled=request.web_search_enabled,
+                enable_reasoning_bank=request.enable_reasoning_bank,
+                reasoning_memory_limit=request.reasoning_memory_limit,
+                turboquant_enabled=request.turboquant_enabled,
+                turboquant_bits=request.turboquant_bits,
                 filters=request.filters,
             )
 
-            # Phase 2: Sources
             sources = [
                 {
-                    "content": c["content"][:200],
-                    "score": c.get("score", 0),
-                    "metadata": c.get("metadata", {}),
+                    "content": chunk["content"][:200],
+                    "score": chunk.get("score", 0),
+                    "metadata": chunk.get("metadata", {}),
                 }
-                for c in context
+                for chunk in context
             ]
-            yield {
-                "event": "sources",
-                "data": json.dumps(sources, default=str),
-            }
+            yield {"event": "sources", "data": json.dumps(sources, default=str)}
 
-            # Phase 3: Streaming generation (with history)
-            yield {
-                "event": "status",
-                "data": json.dumps({"phase": "generating"}),
-            }
+            yield {"event": "status", "data": json.dumps({"phase": "generating"})}
 
             full_answer = []
             async for token in strategy.stream_generate(
@@ -296,12 +302,8 @@ async def query_stream(
                 history=history or None,
             ):
                 full_answer.append(token)
-                yield {
-                    "event": "token",
-                    "data": json.dumps({"text": token}),
-                }
+                yield {"event": "token", "data": json.dumps({"text": token})}
 
-            # Save trace
             answer_text = "".join(full_answer)
             await tracing.save_trace(
                 trace,
@@ -309,30 +311,35 @@ async def query_stream(
                 answer_length=len(answer_text),
                 model=request.model,
             )
+            await strategy.record_outcome(
+                query=request.query,
+                collection=request.collection,
+                trace=trace,
+                success=bool(context),
+                context=context,
+                metadata={"query_rewritten": retrieval_query != request.query},
+            )
 
-            # Update session history
             history.append({"role": "user", "content": request.query})
             history.append({"role": "assistant", "content": answer_text})
             await _save_session(app, user_id, session_id, history)
 
-            # Phase 4: Done (include session_id)
             yield {
                 "event": "done",
-                "data": json.dumps({
-                    "trace_id": trace.trace_id,
-                    "latency_ms": trace.total_latency_ms,
-                    "strategy": request.strategy.value,
-                    "chunks_retrieved": len(context),
-                    "session_id": session_id,
-                    "query_rewritten": retrieval_query != request.query,
-                }),
+                "data": json.dumps(
+                    {
+                        "trace_id": trace.trace_id,
+                        "latency_ms": trace.total_latency_ms,
+                        "strategy": canonical_strategy.value,
+                        "chunks_retrieved": len(context),
+                        "session_id": session_id,
+                        "query_rewritten": retrieval_query != request.query,
+                    }
+                ),
             }
-        except Exception as e:
-            logger.error("Stream error: %s", e, exc_info=True)
-            yield {
-                "event": "error",
-                "data": json.dumps({"message": str(e)}),
-            }
+        except Exception as exc:
+            logger.error("Stream error: %s", exc, exc_info=True)
+            yield {"event": "error", "data": json.dumps({"message": str(exc)})}
 
     return EventSourceResponse(event_generator())
 
@@ -343,16 +350,17 @@ async def compare_strategies(
     req: Request,
     current_user: Optional[dict] = Depends(require_auth_in_production),
 ):
-    """A/B comparison — run the same query through multiple strategies."""
+    """A/B comparison -> run the same query through multiple strategies."""
     app = req.app
     factory = app.state.strategy_factory
     tracing = app.state.tracing_service
 
     async def run_strategy(strat_enum):
+        canonical = factory.canonicalize(strat_enum)
         strategy = factory.get(strat_enum)
         trace = tracing.create_recorder(
             query=request.query,
-            strategy=strat_enum.value,
+            strategy=canonical.value,
             collection=request.collection,
         )
 
@@ -361,6 +369,8 @@ async def compare_strategies(
             collection=request.collection,
             trace=trace,
             top_k=request.top_k,
+            enable_reasoning_bank=True,
+            turboquant_enabled=True,
         )
 
         answer = await strategy.generate(
@@ -377,29 +387,40 @@ async def compare_strategies(
             answer_length=len(answer),
             model=request.model,
         )
+        await strategy.record_outcome(
+            query=request.query,
+            collection=request.collection,
+            trace=trace,
+            success=bool(context),
+            context=context,
+            metadata={"compare_mode": True},
+        )
 
         return CompareResult(
-            strategy=strat_enum,
+            strategy=canonical,
             answer=answer,
             sources=[
                 SourceInfo(
-                    content=c["content"][:200],
-                    score=c.get("score", 0),
-                    metadata=c.get("metadata", {}),
+                    content=chunk["content"][:200],
+                    score=chunk.get("score", 0),
+                    metadata=chunk.get("metadata", {}),
                 )
-                for c in context
+                for chunk in context
             ],
             latency_ms=trace.total_latency_ms,
             trace_id=trace.trace_id,
         )
 
-    # Run all strategies in parallel
+    canonical_strategies = []
+    for strategy_id in request.strategies:
+        canonical = factory.canonicalize(strategy_id)
+        if canonical not in canonical_strategies:
+            canonical_strategies.append(canonical)
+
     results = await asyncio.gather(
-        *[run_strategy(s) for s in request.strategies],
+        *[run_strategy(strategy_id) for strategy_id in canonical_strategies],
         return_exceptions=True,
     )
 
-    # Filter out exceptions
-    valid_results = [r for r in results if isinstance(r, CompareResult)]
-
+    valid_results = [result for result in results if isinstance(result, CompareResult)]
     return CompareResponse(query=request.query, results=valid_results)

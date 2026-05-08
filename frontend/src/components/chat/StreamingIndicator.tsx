@@ -22,13 +22,13 @@ export default function StreamingIndicator({ phase }: StreamingIndicatorProps) {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5">
       <div className="flex gap-1">
-        <span className="w-1 h-1 rounded-full bg-strategy-agentic animate-pulse" />
+        <span className="w-1 h-1 rounded-full bg-strategy-lightrag animate-pulse" />
         <span
-          className="w-1 h-1 rounded-full bg-strategy-hybrid animate-pulse"
+          className="w-1 h-1 rounded-full bg-strategy-graph animate-pulse"
           style={{ animationDelay: '0.2s' }}
         />
         <span
-          className="w-1 h-1 rounded-full bg-strategy-graph animate-pulse"
+          className="w-1 h-1 rounded-full bg-strategy-lightrag animate-pulse"
           style={{ animationDelay: '0.4s' }}
         />
       </div>

@@ -5,9 +5,7 @@ Supports: sentence-transformers (all-MiniLM-L6-v2), OpenAI (text-embedding-3-sma
 
 import asyncio
 import logging
-from typing import Optional
 
-import numpy as np
 
 from openrag.config import settings
 

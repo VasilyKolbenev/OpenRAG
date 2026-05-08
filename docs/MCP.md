@@ -2,7 +2,7 @@
 
 ## What is MCP
 
-Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. OpenRAG implements an MCP server that exposes RAG capabilities as tools, allowing any MCP-compatible client (Claude Desktop, Cursor, etc.) to query documents, upload files, and compare strategies directly from the AI chat interface.
+Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. OpenRAG implements an MCP server that exposes document intelligence capabilities as tools, allowing MCP-compatible clients to query documents, upload files, and compare the two canonical engines directly from chat.
 
 ## Setup
 
@@ -40,8 +40,8 @@ Transport: **stdio** (default). The CLI starts the MCP server as a subprocess an
 |------|-------------|------------|
 | `openrag_query` | Execute a RAG query | `query` (str), `strategy` (str, optional), `collection` (str, optional), `top_k` (int, optional) |
 | `openrag_upload` | Upload a text document | `content` (str), `filename` (str), `collection` (str, optional) |
-| `openrag_strategies` | List available RAG strategies | (none) |
-| `openrag_compare` | A/B compare strategies | `query` (str), `strategies` (list[str]), `collection` (str, optional) |
+| `openrag_strategies` | List available engines | (none) |
+| `openrag_compare` | Compare LightRAG and GraphRAG | `query` (str), `strategies` (list[str]), `collection` (str, optional) |
 | `openrag_collections` | List vector collections | (none) |
 | `openrag_status` | Check service health | (none) |
 
@@ -64,9 +64,9 @@ In Claude Desktop, after connecting OpenRAG:
 
 Claude will call `openrag_query` with the appropriate parameters and return the RAG-augmented answer with sources.
 
-### Compare strategies
+### Compare engines
 
-> "Compare naive and hybrid strategies for: What is chunking?"
+> "Compare LightRAG and GraphRAG for: What is chunking?"
 
 Claude will call `openrag_compare` and present results from both strategies side-by-side.
 

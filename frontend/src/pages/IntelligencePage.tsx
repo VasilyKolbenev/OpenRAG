@@ -1,22 +1,20 @@
 /**
- * Intelligence Page — Full-page AI Strategy Advisor + Strategy Catalog.
- * Central UX for the Intelligence primitive.
+ * Intelligence page with advisor chat and engine catalog.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { STRATEGIES, STRATEGY_COLORS, STRATEGY_MAP } from '@/lib/constants';
 import { useAdvisorStore } from '@/stores/advisorStore';
 import { useAppStore } from '@/stores/appStore';
-import { STRATEGIES, STRATEGY_COLORS } from '@/lib/constants';
-import type { RAGStrategy, AdvisorRecommendation } from '@/types/api';
+import type { AdvisorRecommendation, RAGStrategy } from '@/types/api';
 
 export default function IntelligencePage() {
   const navigate = useNavigate();
-  const setSelectedStrategy = useAppStore((s) => s.setSelectedStrategy);
+  const setSelectedStrategy = useAppStore((state) => state.setSelectedStrategy);
 
   return (
     <div className="mx-auto max-w-6xl py-6">
-      {/* Header */}
       <section className="mb-6">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{'\uD83E\uDDE0'}</span>
@@ -25,48 +23,48 @@ export default function IntelligencePage() {
               Intelligence
             </h1>
             <p className="text-sm text-serpent-text-muted">
-              AI-powered strategy advisor and RAG catalog
+              AI guidance for choosing between LightRAG and GraphRAG
             </p>
           </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left: Advisor Chat (3 cols) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <AdvisorPanel />
         </div>
 
-        {/* Right: Strategy Catalog (2 cols) */}
         <div className="lg:col-span-2">
-          <h2 className="text-sm font-medium text-serpent-text-secondary uppercase tracking-wider mb-3">
-            Strategy Catalog
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-serpent-text-secondary">
+            Engine Catalog
           </h2>
           <div className="space-y-2">
-            {STRATEGIES.map((s) => (
+            {STRATEGIES.map((strategy) => (
               <button
-                key={s.id}
+                key={strategy.id}
                 onClick={() => {
-                  setSelectedStrategy(s.id as RAGStrategy);
+                  setSelectedStrategy(strategy.id as RAGStrategy);
                   navigate('/chat');
                 }}
-                className="w-full text-left rounded-lg border border-serpent-border-light bg-serpent-surface p-3 transition-all hover:border-serpent-border-hover hover:bg-serpent-surface-hover group"
+                className="group w-full rounded-lg border border-serpent-border-light bg-serpent-surface p-3 text-left transition-all hover:border-serpent-border-hover hover:bg-serpent-surface-hover"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span>{s.icon}</span>
-                  <span className="text-sm font-medium" style={{ color: s.color }}>
-                    {s.name}
+                <div className="mb-1 flex items-center gap-2">
+                  <span>{strategy.icon}</span>
+                  <span className="text-sm font-medium" style={{ color: strategy.color }}>
+                    {strategy.name}
                   </span>
-                  <span className="ml-auto text-[10px] text-serpent-text-dim">{s.latency}</span>
+                  <span className="ml-auto text-[10px] text-serpent-text-dim">
+                    {strategy.latency}
+                  </span>
                 </div>
-                <p className="text-xs text-serpent-text-tertiary leading-relaxed line-clamp-2">
-                  {s.desc}
+                <p className="line-clamp-2 text-xs leading-relaxed text-serpent-text-tertiary">
+                  {strategy.desc}
                 </p>
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  {s.tags.slice(0, 3).map((tag) => (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {strategy.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-serpent-surface-active text-serpent-text-dim"
+                      className="rounded bg-serpent-surface-active px-1.5 py-0.5 text-[10px] text-serpent-text-dim"
                     >
                       {tag}
                     </span>
@@ -78,13 +76,10 @@ export default function IntelligencePage() {
         </div>
       </div>
 
-      {/* Model Providers */}
       <ModelProviders />
     </div>
   );
 }
-
-/* ── Model Providers Section ─────────────────────── */
 
 interface ProviderInfo {
   name: string;
@@ -138,55 +133,51 @@ const PROVIDERS: ProviderInfo[] = [
 function ModelProviders() {
   return (
     <section className="mt-8">
-      <h2 className="text-sm font-medium text-serpent-text-secondary uppercase tracking-wider mb-4">
+      <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-serpent-text-secondary">
         Model Providers
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {PROVIDERS.map((p) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {PROVIDERS.map((provider) => (
           <div
-            key={p.name}
-            className="rounded-xl border border-serpent-border-light bg-serpent-surface p-4 flex flex-col gap-3"
+            key={provider.name}
+            className="flex flex-col gap-3 rounded-xl border border-serpent-border-light bg-serpent-surface p-4"
           >
-            {/* Header */}
             <div className="flex items-center gap-2.5">
-              <span className="text-2xl">{p.emoji}</span>
+              <span className="text-2xl">{provider.emoji}</span>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-serpent-text truncate">
-                  {p.name}
+                <h3 className="truncate text-sm font-semibold text-serpent-text">
+                  {provider.name}
                 </h3>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-serpent-surface-active text-serpent-text-dim">
-                  {p.type}
+                <span className="rounded bg-serpent-surface-active px-1.5 py-0.5 text-[10px] text-serpent-text-dim">
+                  {provider.type}
                 </span>
               </div>
             </div>
 
-            {/* Status */}
             <div className="flex items-center gap-2">
               <span
-                className="inline-block h-2 w-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: p.dotColor }}
+                className="inline-block h-2 w-2 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: provider.dotColor }}
               />
-              <span className={`text-xs font-medium ${p.statusColor}`}>
-                {p.status}
+              <span className={`text-xs font-medium ${provider.statusColor}`}>
+                {provider.status}
               </span>
             </div>
 
-            {/* Models */}
             <div className="flex flex-wrap gap-1">
-              {p.models.map((m) => (
+              {provider.models.map((model) => (
                 <span
-                  key={m}
-                  className="text-[10px] px-2 py-0.5 rounded-full border border-serpent-border-light text-serpent-text-dim"
+                  key={model}
+                  className="rounded-full border border-serpent-border-light px-2 py-0.5 text-[10px] text-serpent-text-dim"
                 >
-                  {m}
+                  {model}
                 </span>
               ))}
             </div>
 
-            {/* Configure Button */}
             <button
               disabled
-              className="mt-auto text-xs font-medium px-3 py-1.5 rounded-md border border-serpent-border-light text-serpent-text-dim opacity-40 cursor-not-allowed"
+              className="mt-auto cursor-not-allowed rounded-md border border-serpent-border-light px-3 py-1.5 text-xs font-medium text-serpent-text-dim opacity-40"
             >
               Configure
             </button>
@@ -197,20 +188,12 @@ function ModelProviders() {
   );
 }
 
-/* ── Full-Page Advisor Panel ──────────────────────── */
-
 function AdvisorPanel() {
-  const {
-    messages,
-    recommendation,
-    isLoading,
-    error,
-    sendMessage,
-    reset,
-  } = useAdvisorStore();
+  const { messages, recommendation, isLoading, error, sendMessage, reset } =
+    useAdvisorStore();
 
   const navigate = useNavigate();
-  const setSelectedStrategy = useAppStore((s) => s.setSelectedStrategy);
+  const setSelectedStrategy = useAppStore((state) => state.setSelectedStrategy);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -225,10 +208,10 @@ function AdvisorPanel() {
     await sendMessage(text);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void handleSend();
     }
   };
 
@@ -237,37 +220,46 @@ function AdvisorPanel() {
     navigate('/chat');
   };
 
+  const recommendedMeta = recommendation
+    ? STRATEGY_MAP[recommendation.recommended as RAGStrategy]
+    : null;
+
   return (
-    <div className="rounded-xl border border-serpent-border-light bg-serpent-surface flex flex-col" style={{ minHeight: 500 }}>
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-serpent-border-light flex items-center justify-between">
+    <div
+      className="flex min-h-[500px] flex-col rounded-xl border border-serpent-border-light bg-serpent-surface"
+    >
+      <div className="flex items-center justify-between border-b border-serpent-border-light px-5 py-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">{'\u2728'}</span>
           <div>
-            <h3 className="text-sm font-semibold text-serpent-text">AI Strategy Advisor</h3>
+            <h3 className="text-sm font-semibold text-serpent-text">
+              AI Engine Advisor
+            </h3>
             <p className="text-xs text-serpent-text-muted">
-              Describe your use case — I'll recommend the best RAG strategy
+              Describe your use case and I&apos;ll recommend the best engine
             </p>
           </div>
         </div>
         <button
           onClick={reset}
-          className="text-xs text-serpent-text-dim hover:text-serpent-text-tertiary transition-colors px-2 py-1 rounded border border-serpent-border-light hover:bg-serpent-surface-hover"
+          className="rounded border border-serpent-border-light px-2 py-1 text-xs text-serpent-text-dim transition-colors hover:bg-serpent-surface-hover hover:text-serpent-text-tertiary"
         >
           New Chat
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
         {messages.length === 0 && (
-          <div className="text-center text-serpent-text-dim text-sm mt-12 space-y-2">
-            <p className="text-3xl mb-3">{'\uD83E\uDDE0'}</p>
-            <p className="text-serpent-text-tertiary font-medium">Tell me about your documents</p>
-            <p className="text-xs text-serpent-text-dim max-w-xs mx-auto">
-              What domain? How complex are your queries? I'll analyze your needs and recommend the optimal RAG strategy.
+          <div className="mt-12 space-y-2 text-center text-sm text-serpent-text-dim">
+            <p className="mb-3 text-3xl">{'\uD83E\uDDE0'}</p>
+            <p className="font-medium text-serpent-text-tertiary">
+              Tell me about your documents
             </p>
-            <div className="flex flex-wrap gap-2 justify-center mt-4">
+            <p className="mx-auto max-w-xs text-xs text-serpent-text-dim">
+              Tell me about the domain, query shape, and data structure. I&apos;ll
+              choose between LightRAG and GraphRAG.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
               {[
                 'I have legal contracts to analyze',
                 'Technical documentation Q&A',
@@ -276,10 +268,8 @@ function AdvisorPanel() {
               ].map((prompt) => (
                 <button
                   key={prompt}
-                  onClick={() => {
-                    setInput(prompt);
-                  }}
-                  className="text-xs px-3 py-1.5 rounded-full border border-serpent-border-light text-serpent-text-tertiary hover:bg-serpent-surface-hover transition-colors"
+                  onClick={() => setInput(prompt)}
+                  className="rounded-full border border-serpent-border-light px-3 py-1.5 text-xs text-serpent-text-tertiary transition-colors hover:bg-serpent-surface-hover"
                 >
                   {prompt}
                 </button>
@@ -288,76 +278,80 @@ function AdvisorPanel() {
           </div>
         )}
 
-        {messages.map((msg) => (
+        {messages.map((message) => (
           <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            key={message.id}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] px-4 py-2.5 rounded-xl text-sm leading-relaxed ${
-                msg.role === 'user'
+              className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
+                message.role === 'user'
                   ? 'bg-[#C8F547]/15 text-serpent-text'
                   : 'bg-serpent-surface-hover text-serpent-text-secondary'
               }`}
             >
-              <MessageContent content={msg.content} />
+              <MessageContent content={message.content} />
             </div>
           </div>
         ))}
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-serpent-surface-hover px-4 py-2.5 rounded-xl">
-              <span className="text-serpent-text-dim text-sm animate-pulse">
+            <div className="rounded-xl bg-serpent-surface-hover px-4 py-2.5">
+              <span className="text-sm text-serpent-text-dim animate-pulse">
                 Analyzing your requirements...
               </span>
             </div>
           </div>
         )}
 
-        {error && (
-          <div className="text-red-400 text-xs text-center py-2">{error}</div>
-        )}
+        {error && <div className="py-2 text-center text-xs text-red-400">{error}</div>}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Recommendation Card */}
-      {recommendation && (
-        <div className="mx-5 mb-3 p-4 rounded-xl border border-serpent-border-light bg-gradient-to-r from-serpent-surface-hover to-serpent-surface">
-          <div className="flex items-center justify-between mb-2">
+      {recommendation && recommendedMeta && (
+        <div className="mx-5 mb-3 rounded-xl border border-serpent-border-light bg-gradient-to-r from-serpent-surface-hover to-serpent-surface p-4">
+          <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-serpent-text-muted">Recommended Strategy:</span>
+              <span className="text-xs text-serpent-text-muted">
+                Recommended Engine:
+              </span>
               <span
                 className="text-sm font-bold uppercase"
-                style={{ color: STRATEGY_COLORS[recommendation.recommended as RAGStrategy] ?? '#C8F547' }}
+                style={{
+                  color:
+                    STRATEGY_COLORS[recommendation.recommended as RAGStrategy] ??
+                    '#C8F547',
+                }}
               >
-                {recommendation.recommended}
+                {recommendedMeta.name}
               </span>
             </div>
             <button
               onClick={() => applyRecommendation(recommendation)}
-              className="text-xs font-medium px-3 py-1.5 rounded-md bg-[#C8F547] text-[#0f1117] hover:bg-[#b8e03e] transition-colors"
+              className="rounded-md bg-[#C8F547] px-3 py-1.5 text-xs font-medium text-[#0f1117] transition-colors hover:bg-[#b8e03e]"
             >
-              Use This Strategy →
+              Use This Engine {'\u2192'}
             </button>
           </div>
           {recommendation.reasoning && (
-            <p className="text-xs text-serpent-text-tertiary leading-relaxed">
+            <p className="text-xs leading-relaxed text-serpent-text-tertiary">
               {recommendation.reasoning}
             </p>
           )}
           {Object.keys(recommendation.scores).length > 0 && (
-            <div className="flex gap-1.5 mt-2 flex-wrap">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {Object.entries(recommendation.scores)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 5)
+                .sort(([, left], [, right]) => right - left)
+                .slice(0, 2)
                 .map(([name, score]) => (
                   <span
                     key={name}
-                    className="text-[10px] px-2 py-0.5 rounded-full bg-serpent-surface-active text-serpent-text-dim"
+                    className="rounded-full bg-serpent-surface-active px-2 py-0.5 text-[10px] text-serpent-text-dim"
                   >
-                    {name}: {(score * 100).toFixed(0)}%
+                    {STRATEGY_MAP[name as RAGStrategy]?.name ?? name}:{' '}
+                    {(score * 100).toFixed(0)}%
                   </span>
                 ))}
             </div>
@@ -365,22 +359,21 @@ function AdvisorPanel() {
         </div>
       )}
 
-      {/* Input */}
-      <div className="px-5 py-4 border-t border-serpent-border-light">
+      <div className="border-t border-serpent-border-light px-5 py-4">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe your documents and use case..."
-            className="flex-1 bg-serpent-bg border border-serpent-border rounded-lg px-4 py-2.5 text-sm text-serpent-text placeholder-serpent-text-dim focus:outline-none focus:border-[#C8F547]/40"
+            className="flex-1 rounded-lg border border-serpent-border bg-serpent-bg px-4 py-2.5 text-sm text-serpent-text placeholder-serpent-text-dim focus:outline-none focus:border-[#C8F547]/40"
             disabled={isLoading}
           />
           <button
-            onClick={handleSend}
+            onClick={() => void handleSend()}
             disabled={isLoading || !input.trim()}
-            className="px-5 py-2.5 bg-[#C8F547] text-[#0f1117] rounded-lg text-sm font-medium hover:bg-[#b8e03e] disabled:opacity-30 transition-all"
+            className="rounded-lg bg-[#C8F547] px-5 py-2.5 text-sm font-medium text-[#0f1117] transition-all hover:bg-[#b8e03e] disabled:opacity-30"
           >
             Send
           </button>
@@ -390,21 +383,24 @@ function AdvisorPanel() {
   );
 }
 
-/* ── Message Content ──────────────────────────────── */
-
 function MessageContent({ content }: { content: string }) {
   const parts = content.split(/(\*\*.*?\*\*)/g);
+
   return (
     <>
-      {parts.map((part, i) => {
+      {parts.map((part, index) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong key={i} className="font-semibold" style={{ color: '#C8F547' }}>
+            <strong
+              key={index}
+              className="font-semibold"
+              style={{ color: '#C8F547' }}
+            >
               {part.slice(2, -2)}
             </strong>
           );
         }
-        return <span key={i}>{part}</span>;
+        return <span key={index}>{part}</span>;
       })}
     </>
   );
