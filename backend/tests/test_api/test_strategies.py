@@ -30,6 +30,23 @@ class TestStrategiesEndpoint:
             assert "complexity" in strategy
             assert "latency" in strategy
             assert "accuracy" in strategy
+            assert "available" in strategy
+
+    async def test_graph_marked_unavailable_when_neo4j_offline(
+        self, client: AsyncClient, mock_graph_store
+    ):
+        # Mock graph health check to return False (Neo4j offline)
+        mock_graph_store.health_check.return_value = False
+
+        response = await client.get("/strategies")
+        assert response.status_code == 200
+        strategies = {s["id"]: s for s in response.json()["strategies"]}
+
+        assert strategies["graph"]["available"] is False
+        assert strategies["graph"]["unavailable_reason"] is not None
+        # LightRAG and AgenticRAG remain available regardless of Neo4j
+        assert strategies["lightrag"]["available"] is True
+        assert strategies["agentic"]["available"] is True
 
 
 class TestRecommendEndpoint:

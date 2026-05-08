@@ -222,6 +222,8 @@ export interface StrategyInfo {
   complexity: number;
   latency: string;
   accuracy: string;
+  available?: boolean;
+  unavailable_reason?: string | null;
 }
 
 export interface StrategyListResponse {

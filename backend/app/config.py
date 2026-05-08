@@ -3,7 +3,7 @@ OpenRAG — Configuration
 Uses pydantic-settings for type-safe environment variable loading.
 """
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     encryption_key: str = ""
     # OPENRAG_ADMIN_PASSWORD enables the built-in password -> JWT flow.
     # In production this is required; in development it stays empty so unauthenticated requests work.
-    admin_password: str = ""
+    admin_password: str = Field(default="", validation_alias="OPENRAG_ADMIN_PASSWORD")
 
     # Application
     environment: str = "development"

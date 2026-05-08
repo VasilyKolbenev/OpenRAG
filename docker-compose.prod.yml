@@ -121,8 +121,10 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - OPENRAG_ADMIN_PASSWORD=${OPENRAG_ADMIN_PASSWORD}
       - ENVIRONMENT=production
       - LOG_LEVEL=info
+      - SEED_DIR=/app/seed/documents
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     labels:
       - "traefik.enable=true"
@@ -144,6 +146,7 @@ services:
     volumes:
       - upload-data:/app/uploads
       - model-cache:/app/models
+      - ./seed:/app/seed:ro
     networks:
       - openrag-public
       - openrag-internal

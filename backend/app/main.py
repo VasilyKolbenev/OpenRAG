@@ -1,10 +1,14 @@
 """
 OPENRAG PLATFORM -> Application Factory
-FastAPI application with a focused two-engine RAG product surface.
+FastAPI application with three canonical engines (LightRAG, AgenticRAG, GraphRAG).
 """
 
 import logging
+import os
+import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,6 +68,54 @@ async def lifespan(app: FastAPI):
         cache=cache,
     )
     app.state.strategy_factory = factory
+
+    # Auto-seed demo documents on first launch.
+    # Path is taken from SEED_DIR env (set in docker-compose) or resolved from repo layout.
+    seed_dir_env = os.getenv("SEED_DIR")
+    if seed_dir_env:
+        seed_dir = Path(seed_dir_env)
+    else:
+        seed_dir = Path(__file__).resolve().parent.parent.parent / "seed" / "documents"
+
+    if seed_dir.exists():
+        try:
+            is_seeded = await cache._client.get("openrag:seeded")
+        except Exception:
+            is_seeded = None
+        if not is_seeded:
+            logger.info("First launch detected -> seeding demo documents from %s", seed_dir)
+            try:
+                from app.services.document_processor import DocumentProcessorService
+
+                processor = DocumentProcessorService(
+                    embedding_service=embedding,
+                    vector_store=vector_store,
+                    graph_store=graph_store,
+                )
+                for doc_file in sorted(seed_dir.glob("*.md")):
+                    doc_id = str(uuid.uuid4())
+                    chunks = await processor.process_file(
+                        file_path=str(doc_file),
+                        document_id=doc_id,
+                        collection="default",
+                        metadata={"source": "seed", "filename": doc_file.name},
+                    )
+                    await cache.store_trace(f"doc_status:{doc_id}", {
+                        "id": doc_id,
+                        "filename": doc_file.name,
+                        "status": "indexed",
+                        "chunks": chunks,
+                        "collection": "default",
+                        "file_size": doc_file.stat().st_size,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "content_type": "text/markdown",
+                        "metadata": {"source": "seed", "filename": doc_file.name},
+                    })
+                    logger.info("Seeded %s (%d chunks)", doc_file.name, chunks)
+                await cache._client.set("openrag:seeded", "1")
+                logger.info("Seed data loaded.")
+            except Exception as exc:
+                logger.warning("Seed failed (non-critical): %s", exc)
 
     logger.info("All services initialized")
     yield

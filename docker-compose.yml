@@ -53,6 +53,7 @@ services:
       - SENTENCE_TRANSFORMERS_HOME=/app/models
       - TRANSFORMERS_CACHE=/app/models
       - HF_HOME=/app/models
+      - SEED_DIR=/app/seed/documents
     ports:
       - "8000:8000"
     depends_on:
@@ -65,6 +66,7 @@ services:
     volumes:
       - upload-data:/app/uploads
       - model-cache:/app/models
+      - ./seed:/app/seed:ro
     networks:
       - openrag
     # healthcheck managed externally — Dockerfile HEALTHCHECK removed to prevent restart loops
