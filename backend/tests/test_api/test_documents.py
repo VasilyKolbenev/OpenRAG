@@ -79,7 +79,7 @@ class TestDocumentGet:
             "created_at": "2024-01-01T00:00:00",
             "content_type": "application/pdf",
         }
-        app.state.cache.get_trace.return_value = doc_data
+        app.state.cache.get_doc_status.return_value = doc_data
 
         response = await client.get("/documents/doc-123")
         assert response.status_code == 200
@@ -89,4 +89,4 @@ class TestDocumentGet:
         assert data["chunks"] == 42
 
         # Restore
-        app.state.cache.get_trace.return_value = None
+        app.state.cache.get_doc_status.return_value = None

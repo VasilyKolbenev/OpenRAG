@@ -100,7 +100,7 @@ async def lifespan(app: FastAPI):
                         collection="default",
                         metadata={"source": "seed", "filename": doc_file.name},
                     )
-                    await cache.store_trace(f"doc_status:{doc_id}", {
+                    await cache.store_doc_status(doc_id, {
                         "id": doc_id,
                         "filename": doc_file.name,
                         "status": "indexed",

@@ -6,7 +6,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { STRATEGIES, STRATEGY_MAP } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
 import { api } from '@/lib/api';
-import type { RAGStrategy, DocumentResponse } from '@/types/api';
+import { useStrategyAvailability } from '@/hooks/useStrategyAvailability';
+import type {
+  RAGStrategy,
+  DocumentResponse,
+  CanonicalRAGStrategy,
+} from '@/types/api';
 
 interface ChatInputProps {
   onSend: (query: string) => void;
@@ -26,6 +31,18 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   const selectedDocumentFilter = useAppStore((s) => s.selectedDocumentFilter);
   const setSelectedDocumentFilter = useAppStore((s) => s.setSelectedDocumentFilter);
   const meta = STRATEGY_MAP[selectedStrategy];
+
+  const { isAvailable, unavailableReason } = useStrategyAvailability();
+
+  // If the live API marks the currently selected engine unavailable
+  // (e.g. operator stopped Neo4j) — fall back to lightrag rather than
+  // letting the user fire a request that will fail.
+  const canonicalSelected = selectedStrategy as CanonicalRAGStrategy;
+  useEffect(() => {
+    if (!isAvailable(canonicalSelected)) {
+      setSelectedStrategy('lightrag');
+    }
+  }, [canonicalSelected, isAvailable, setSelectedStrategy]);
 
   // Fetch documents for the picker
   useEffect(() => {
@@ -57,27 +74,35 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
       {/* Strategy picker dropdown */}
       {showStrategyPicker && (
         <div className="absolute bottom-full left-0 mb-1 w-[260px] bg-serpent-surface border border-serpent-border rounded-lg shadow-xl z-50 py-1">
-          {STRATEGIES.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setSelectedStrategy(s.id as RAGStrategy);
-                setShowStrategyPicker(false);
-              }}
-              className="w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-serpent-surface-hover transition-colors"
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: s.color }}
-              />
-              <span className="text-[12px] text-serpent-text-secondary font-medium">
-                {s.name}
-              </span>
-              <span className="text-[10px] text-serpent-text-dim ml-auto">
-                {s.latency}
-              </span>
-            </button>
-          ))}
+          {STRATEGIES.map((s) => {
+            const id = s.id as CanonicalRAGStrategy;
+            const available = isAvailable(id);
+            const reason = unavailableReason(id);
+            return (
+              <button
+                key={s.id}
+                disabled={!available}
+                title={!available ? reason : undefined}
+                onClick={() => {
+                  if (!available) return;
+                  setSelectedStrategy(s.id as RAGStrategy);
+                  setShowStrategyPicker(false);
+                }}
+                className="w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-serpent-surface-hover transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: s.color }}
+                />
+                <span className="text-[12px] text-serpent-text-secondary font-medium">
+                  {s.name}
+                </span>
+                <span className="text-[10px] text-serpent-text-dim ml-auto">
+                  {available ? s.latency : 'offline'}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 

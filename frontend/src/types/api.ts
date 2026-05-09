@@ -4,7 +4,7 @@
 
 // -- Enums --------------------------------------------------
 
-export type CanonicalRAGStrategy = 'graph' | 'lightrag';
+export type CanonicalRAGStrategy = 'lightrag' | 'agentic' | 'graph';
 export type LegacyRAGStrategy =
   | 'agentic'
   | 'corrective'

@@ -23,7 +23,7 @@ export default function IntelligencePage() {
               Intelligence
             </h1>
             <p className="text-sm text-serpent-text-muted">
-              AI guidance for choosing between LightRAG and GraphRAG
+              AI guidance for choosing between LightRAG, AgenticRAG, and GraphRAG
             </p>
           </div>
         </div>
@@ -257,7 +257,7 @@ function AdvisorPanel() {
             </p>
             <p className="mx-auto max-w-xs text-xs text-serpent-text-dim">
               Tell me about the domain, query shape, and data structure. I&apos;ll
-              choose between LightRAG and GraphRAG.
+              recommend the right engine: LightRAG, AgenticRAG, or GraphRAG.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {[

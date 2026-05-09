@@ -237,18 +237,63 @@ class RedisService:
         await self._client.delete(key)
 
     # ── Document Status ──
+    # Document records use a dedicated key namespace WITHOUT a TTL.
+    # Documents represent persistent ingested content; they must not expire.
+    # Pipeline traces (which DO use openrag:trace:*) keep the 24h TTL.
+
+    @staticmethod
+    def _doc_status_key(doc_id: str) -> str:
+        return f"openrag:doc_status:{doc_id}"
+
+    async def store_doc_status(self, doc_id: str, status_data: dict) -> None:
+        """Store document status persistently (no TTL)."""
+        key = self._doc_status_key(doc_id)
+        await self._client.set(key, json.dumps(status_data, default=str))
+
+    async def get_doc_status(self, doc_id: str) -> Optional[dict]:
+        """Get document status by id. Falls back to legacy trace-keyed location."""
+        # Primary: persistent doc_status key
+        data = await self._client.get(self._doc_status_key(doc_id))
+        if data:
+            return json.loads(data)
+        # Backward compat: older deployments stored docs under the trace namespace
+        legacy_key = f"openrag:trace:doc_status:{doc_id}"
+        legacy = await self._client.get(legacy_key)
+        if legacy:
+            try:
+                doc = json.loads(legacy)
+            except json.JSONDecodeError:
+                return None
+            # Migrate to the persistent key so the next call avoids TTL pressure
+            await self._client.set(self._doc_status_key(doc_id), legacy)
+            return doc
+        return None
 
     async def list_doc_statuses(
         self, collection: str | None = None
     ) -> list[dict]:
-        """List all document statuses from Redis via SCAN."""
-        pattern = "openrag:trace:doc_status:*"
-        documents: list[dict] = []
+        """List all document statuses from Redis via SCAN.
 
-        async for key in self._client.scan_iter(match=pattern, count=100):
-            data = await self._client.get(key)
-            if data:
-                doc = json.loads(data)
+        Reads both the persistent namespace and the legacy trace-keyed one so
+        upgrades from older deployments do not lose document listings.
+        """
+        documents: list[dict] = []
+        seen_ids: set[str] = set()
+
+        for pattern in ("openrag:doc_status:*", "openrag:trace:doc_status:*"):
+            async for key in self._client.scan_iter(match=pattern, count=100):
+                data = await self._client.get(key)
+                if not data:
+                    continue
+                try:
+                    doc = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+                doc_id = doc.get("id")
+                if doc_id and doc_id in seen_ids:
+                    continue
+                if doc_id:
+                    seen_ids.add(doc_id)
                 if collection is None or doc.get("collection") == collection:
                     documents.append(doc)
 
@@ -256,10 +301,10 @@ class RedisService:
         return documents
 
     async def delete_doc_status(self, doc_id: str) -> bool:
-        """Delete a document status key from Redis. Returns True if key existed."""
-        key = f"openrag:trace:doc_status:{doc_id}"
-        deleted = await self._client.delete(key)
-        return deleted > 0
+        """Delete a document status key from Redis. Returns True if any key existed."""
+        deleted_persistent = await self._client.delete(self._doc_status_key(doc_id))
+        deleted_legacy = await self._client.delete(f"openrag:trace:doc_status:{doc_id}")
+        return (deleted_persistent + deleted_legacy) > 0
 
     # ── Health ──
 

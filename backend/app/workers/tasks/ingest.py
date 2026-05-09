@@ -26,10 +26,14 @@ def _get_redis():
 
 
 def _update_doc_status(doc_id: str, status_data: dict) -> None:
-    """Update document processing status in Redis."""
+    """Update document processing status in Redis (persistent — no TTL).
+
+    Documents are durable platform content; they must survive Redis TTL
+    expiration. The trace namespace is reserved for ephemeral pipeline traces.
+    """
     r = _get_redis()
-    key = f"openrag:trace:doc_status:{doc_id}"
-    r.setex(key, 86400, json.dumps(status_data, default=str))
+    key = f"openrag:doc_status:{doc_id}"
+    r.set(key, json.dumps(status_data, default=str))
 
 
 @celery_app.task(

@@ -30,8 +30,8 @@ export default function StrategiesPage() {
             Choose Your Engine
           </h1>
           <p className="text-[13px] text-serpent-text-muted font-dm-sans">
-            LightRAG and GraphRAG cover the product surface. Pick the engine that
-            matches your knowledge structure and delivery goals.
+            LightRAG, AgenticRAG, and GraphRAG cover the product surface. Pick the
+            engine that matches your knowledge structure and delivery goals.
           </p>
         </div>
         <button

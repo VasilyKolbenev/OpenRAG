@@ -75,7 +75,7 @@ async def upload_document(
             extra={"collection": collection, "existing_doc_id": existing_doc_id},
         )
         # Return existing document info
-        status_data = await cache.get_trace(f"doc_status:{existing_doc_id}")
+        status_data = await cache.get_doc_status(existing_doc_id)
         return DocumentResponse(
             id=existing_doc_id,
             filename=status_data.get("filename", file.filename) if status_data else file.filename,
@@ -114,7 +114,7 @@ async def upload_document(
         # Another upload won the race — clean up and return existing
         shutil.rmtree(upload_dir, ignore_errors=True)
         existing_doc_id = await cache.get_file_hash(collection, content_hash)
-        status_data = await cache.get_trace(f"doc_status:{existing_doc_id}") if existing_doc_id else None
+        status_data = await cache.get_doc_status(existing_doc_id) if existing_doc_id else None
         return DocumentResponse(
             id=existing_doc_id or doc_id,
             filename=status_data.get("filename", safe_name) if status_data else safe_name,
@@ -190,7 +190,7 @@ async def get_document(doc_id: str, req: Request):
     """Get document status and details."""
     # Check Redis for processing status
     cache = req.app.state.cache
-    status_data = await cache.get_trace(f"doc_status:{doc_id}")
+    status_data = await cache.get_doc_status(doc_id)
 
     if status_data:
         return DocumentDetail(**status_data)
@@ -205,7 +205,7 @@ async def delete_document(doc_id: str, req: Request):
     vector_store = req.app.state.vector_store
 
     # Verify document exists
-    status_data = await cache.get_trace(f"doc_status:{doc_id}")
+    status_data = await cache.get_doc_status(doc_id)
     if not status_data:
         raise HTTPException(404, f"Document {doc_id} not found")
 

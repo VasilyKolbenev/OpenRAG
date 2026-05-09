@@ -81,7 +81,7 @@ export default function DashboardPage() {
       color: '#C8F547',
       gradient: 'from-[#C8F547]/10 to-[#C8F547]/5',
       description:
-        'Two-engine product surface with AI-guided selection. LightRAG covers fast mixed-document retrieval, while GraphRAG handles relationship-heavy reasoning.',
+        'Three-engine product surface with AI-guided selection. LightRAG for fast mixed-document retrieval, AgenticRAG for autonomous multi-step research, and GraphRAG for relationship-heavy reasoning.',
       stats: [
         { label: 'Engines', value: String(STRATEGIES.length) },
         { label: 'Auto-Select', value: 'AI Advisor' },
@@ -136,7 +136,7 @@ export default function DashboardPage() {
       color: '#2DD4A8',
       gradient: 'from-[#2DD4A8]/10 to-[#2DD4A8]/5',
       description:
-        'Trace-based quality learning for the two core engines. Every query leaves a pipeline trace you can inspect, compare, and optimize.',
+        'Trace-based quality learning across every engine. Every query leaves a pipeline trace you can inspect, compare, and optimize.',
       stats: [
         { label: 'Pipeline Traces', value: 'Active' },
         { label: 'Debugger', value: 'Real-time' },
@@ -152,7 +152,7 @@ export default function DashboardPage() {
           Command Center
         </h1>
         <p className="mt-1.5 text-sm text-serpent-text-muted">
-          Market-ready document intelligence built around LightRAG and GraphRAG
+          Market-ready document intelligence built around LightRAG, AgenticRAG, and GraphRAG
         </p>
       </section>
 

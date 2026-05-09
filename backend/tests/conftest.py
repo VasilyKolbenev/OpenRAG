@@ -146,6 +146,8 @@ def mock_cache_service() -> AsyncMock:
     svc.invalidate_collection_cache.return_value = None
     svc.store_trace.return_value = None
     svc.get_trace.return_value = None
+    svc.store_doc_status.return_value = None
+    svc.get_doc_status.return_value = None
     svc.get_embedding_cache.return_value = None
     svc.set_embedding_cache.return_value = None
     # MemoRAG
