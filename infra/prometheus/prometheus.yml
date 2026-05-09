@@ -1,16 +1,16 @@
-# Serpent RAG — Prometheus Configuration
+# OpenRAG — Prometheus Configuration
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: "serpent-api"
+  - job_name: "openrag-api"
     metrics_path: /metrics
     static_configs:
       - targets: ["api:8000"]
         labels:
-          service: "serpent-api"
+          service: "openrag-api"
 
   - job_name: "traefik"
     static_configs:

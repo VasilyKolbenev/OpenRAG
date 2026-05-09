@@ -1,5 +1,5 @@
 /**
- * Typed API client for SerpentRAG backend.
+ * Typed API client for OpenRAG backend.
  * All requests go through /api/ prefix (Vite proxy in dev, Traefik in prod).
  */
 
@@ -18,7 +18,6 @@ import type {
   RecommendationResponse,
   PipelineTrace,
   GraphData,
-  QualityMetrics,
   HealthResponse,
   AdvisorChatRequest,
   AdvisorChatResponse,
@@ -54,11 +53,12 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // keep as text
     }
     throw new ApiError(res.status, res.statusText, body);
   }
@@ -93,11 +93,12 @@ export async function queryStream(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // keep as text
     }
     throw new ApiError(res.status, res.statusText, body);
   }
@@ -135,11 +136,12 @@ export async function uploadDocument(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // keep as text
     }
     throw new ApiError(res.status, res.statusText, body);
   }
@@ -208,19 +210,6 @@ export async function getGraph(params: {
   return request<GraphData>(`/graph/explore?${searchParams.toString()}`);
 }
 
-// ── Quality Metrics ────────────────────────────────
-
-export async function getQualityMetrics(params: {
-  strategy?: string;
-  period?: string;
-}): Promise<QualityMetrics> {
-  const searchParams = new URLSearchParams();
-  if (params.strategy) searchParams.set('strategy', params.strategy);
-  if (params.period) searchParams.set('period', params.period);
-
-  return request<QualityMetrics>(`/metrics/quality?${searchParams.toString()}`);
-}
-
 // ── Advisor Chatbot ───────────────────────────────
 
 export async function advisorChat(
@@ -250,6 +239,26 @@ export async function health(): Promise<HealthResponse> {
   return request<HealthResponse>('/health');
 }
 
+// ── Auth ──────────────────────────────────────────
+
+export interface LoginRequest {
+  password: string;
+  user_id?: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in_hours: number;
+}
+
+export async function login(params: LoginRequest): Promise<LoginResponse> {
+  return request<LoginResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
 // ── Export as namespace ────────────────────────────
 
 export const api = {
@@ -265,11 +274,11 @@ export const api = {
   recommend,
   getTrace,
   getGraph,
-  getQualityMetrics,
   advisorChat,
   listSessions,
   deleteSession,
   health,
+  login,
 } as const;
 
 export { ApiError };

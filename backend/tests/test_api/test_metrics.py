@@ -2,7 +2,6 @@
 Tests for metrics endpoints — GET /metrics/quality.
 """
 
-import pytest
 from httpx import AsyncClient
 
 

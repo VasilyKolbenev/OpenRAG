@@ -4,7 +4,6 @@ Tests for GraphRAGStrategy — entity extraction, traversal, merge.
 
 from unittest.mock import AsyncMock
 
-from app.services.graph_store import GraphEdge, GraphNode, Neo4jService
 from app.services.tracing import TraceRecorder
 from app.strategies.graph_rag import GraphRAGStrategy
 
@@ -116,7 +115,7 @@ class TestGraphRAGRetrieve:
         )
         trace = TraceRecorder(query="q", strategy="graph", collection="c")
 
-        results = await strategy.retrieve(
+        await strategy.retrieve(
             query="something without entities",
             collection="default",
             trace=trace,

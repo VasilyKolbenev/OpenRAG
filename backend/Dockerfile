@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────
-# SERPENT RAG PLATFORM — Backend Dockerfile
+# OpenRAG Platform — Backend Dockerfile
 # Multi-stage build with security hardening
 # ─────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 FROM python:3.12-slim AS production
 
 # Security: Create non-root user
-RUN groupadd -r serpent && useradd -r -g serpent -d /app -s /sbin/nologin serpent
+RUN groupadd -r openrag && useradd -r -g openrag -d /app -s /sbin/nologin openrag
 
 # Install runtime dependencies only
 RUN apt-get update && \
@@ -37,11 +37,11 @@ COPY --from=builder /install /usr/local
 WORKDIR /app
 
 # Copy application code
-COPY --chown=serpent:serpent . .
+COPY --chown=openrag:openrag . .
 
 # Create necessary directories
 RUN mkdir -p /app/uploads /app/models /app/logs && \
-    chown -R serpent:serpent /app
+    chown -R openrag:openrag /app
 
 # Entrypoint: run Alembic migrations before starting
 RUN chmod +x /app/entrypoint.sh
@@ -56,7 +56,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Health check managed by docker-compose
 
 # Switch to non-root user
-USER serpent
+USER openrag
 
 EXPOSE 8000
 

@@ -1,4 +1,4 @@
-# Serpent RAG — OpenTelemetry Collector Configuration
+# OpenRAG — OpenTelemetry Collector Configuration
 
 receivers:
   otlp:
@@ -16,7 +16,7 @@ processors:
 exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
-    namespace: serpent
+    namespace: openrag
   logging:
     loglevel: info
 

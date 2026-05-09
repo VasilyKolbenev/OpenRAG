@@ -51,11 +51,10 @@ export default function DocumentList() {
 
   useEffect(() => {
     const indexedCount = Object.values(uploads).filter(
-      (u) => u.status === 'indexed',
+      (u) => u.status === 'indexed' || u.status === 'failed',
     ).length;
 
     if (indexedCount > prevIndexedCount.current) {
-      // New upload just finished — debounce refresh
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(fetchDocuments, UPLOAD_REFRESH_DEBOUNCE);
     }
@@ -156,7 +155,7 @@ export default function DocumentList() {
         return (
           <div
             key={doc.id}
-            className="grid grid-cols-[1fr_90px_80px_90px_140px_40px] gap-3 px-4 py-3 border-b border-serpent-border-light last:border-b-0 hover:bg-[#0a0a0a] transition-colors"
+            className="grid grid-cols-[1fr_90px_80px_90px_140px_40px] gap-3 px-4 py-3 border-b border-serpent-border-light last:border-b-0 hover:bg-serpent-surface-hover transition-colors"
           >
             {/* Filename */}
             <div className="flex items-center gap-2 min-w-0">

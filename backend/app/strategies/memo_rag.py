@@ -18,7 +18,7 @@ from app.services.tracing import TraceRecorder
 from app.services.vector_store import QdrantService
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.memo_rag")
+logger = logging.getLogger("openrag.memo_rag")
 
 MEMORY_BUILD_PROMPT = """You are a knowledge analyst. Given the following document chunks from a
 collection, create a comprehensive global memory summary that captures:
@@ -63,7 +63,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
         llm_service: LLMService,
         vector_store: QdrantService,
         cache: RedisService,
-        light_model: str = "claude-3-haiku-20240307",
+        light_model: str = "openai/gpt-5.4-mini",
     ) -> None:
         super().__init__(
             embedding_service=embedding_service,
@@ -80,6 +80,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
         trace: TraceRecorder,
         top_k: int = 10,
         light_model: Optional[str] = None,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         """MemoRAG retrieval: memory → clues → guided search."""
@@ -89,17 +90,17 @@ class MemoRAGStrategy(BaseRAGStrategy):
         memory = await self._get_or_build_memory(collection, trace, model)
         if not memory:
             logger.warning("Empty memory for collection %s, falling back to naive", collection)
-            return await self._naive_fallback(query, collection, trace, top_k)
+            return await self._naive_fallback(query, collection, trace, top_k, filters=filters)
 
         # 2. Generate retrieval clues
         clues = await self._generate_clues(query, memory, trace, model)
         if not clues:
             logger.warning("No clues generated, falling back to naive retrieval")
-            return await self._naive_fallback(query, collection, trace, top_k)
+            return await self._naive_fallback(query, collection, trace, top_k, filters=filters)
 
         # 3. Clue-guided retrieval
         results = await self._clue_guided_retrieval(
-            query, clues, collection, top_k, trace
+            query, clues, collection, top_k, trace, filters=filters
         )
 
         return results
@@ -209,6 +210,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
         collection: str,
         top_k: int,
         trace: TraceRecorder,
+        filters: dict | None = None,
     ) -> list[dict]:
         """Retrieve using each clue, merge and deduplicate results."""
         trace.start_step(
@@ -228,6 +230,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
                 collection_name=collection,
                 query_vector=vector,
                 limit=per_clue_k,
+                filters=filters,
             )
 
             for r in results:
@@ -261,6 +264,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
         collection: str,
         trace: TraceRecorder,
         top_k: int,
+        filters: dict | None = None,
     ) -> list[dict]:
         """Fallback to simple vector search when memory/clues unavailable."""
         trace.start_step("naive_fallback", input_summary="memory unavailable")
@@ -269,6 +273,7 @@ class MemoRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=vector,
             limit=top_k,
+            filters=filters,
         )
         output = [
             {

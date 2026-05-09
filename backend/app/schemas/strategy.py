@@ -30,6 +30,8 @@ class StrategyInfo(BaseModel):
     complexity: int
     latency: str
     accuracy: str
+    available: bool = True
+    unavailable_reason: Optional[str] = None
 
 
 class StrategyListResponse(BaseModel):

@@ -3,9 +3,8 @@ Root test fixtures — mock services, test app, httpx client.
 All tests run without Docker (pure mocks, ~5s total).
 """
 
-import uuid
-from collections.abc import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
+from collections.abc import AsyncGenerator, Generator
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -13,7 +12,6 @@ from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings
 from app.dependencies import AuthService
-from app.schemas.query import RAGStrategy
 from app.services.cache import RedisService
 from app.services.embedding import EmbeddingService
 from app.services.graph_store import GraphEdge, GraphNode, Neo4jService
@@ -21,6 +19,7 @@ from app.services.llm import LLMService
 from app.services.tracing import TracingService
 from app.services.vector_store import QdrantService, SearchResult
 from app.strategies.factory import StrategyFactory
+from app.strategies.hybrid import HybridRAGStrategy
 
 
 # ── Settings ──
@@ -147,11 +146,15 @@ def mock_cache_service() -> AsyncMock:
     svc.invalidate_collection_cache.return_value = None
     svc.store_trace.return_value = None
     svc.get_trace.return_value = None
+    svc.store_doc_status.return_value = None
+    svc.get_doc_status.return_value = None
     svc.get_embedding_cache.return_value = None
     svc.set_embedding_cache.return_value = None
     # MemoRAG
     svc.get_memo_memory.return_value = None
     svc.set_memo_memory.return_value = None
+    svc.get_reasoning_bank.return_value = []
+    svc.append_reasoning_bank.return_value = None
     # Advisor
     svc.get_advisor_session.return_value = None
     svc.set_advisor_session.return_value = None
@@ -181,15 +184,31 @@ def mock_strategy_factory(
     mock_vector_store: AsyncMock,
     mock_graph_store: AsyncMock,
     mock_cache_service: AsyncMock,
-) -> StrategyFactory:
+) -> Generator[StrategyFactory, None, None]:
     """Real StrategyFactory wired with mock services."""
-    return StrategyFactory(
-        embedding_service=mock_embedding_service,
-        llm_service=mock_llm_service,
-        vector_store=mock_vector_store,
-        graph_store=mock_graph_store,
-        cache=mock_cache_service,
-    )
+    prev_reranker = HybridRAGStrategy._reranker
+    prev_reranker_disabled = HybridRAGStrategy._reranker_disabled
+    prev_colbert = HybridRAGStrategy._colbert_model
+    prev_colbert_disabled = HybridRAGStrategy._colbert_disabled
+
+    HybridRAGStrategy._reranker = None
+    HybridRAGStrategy._reranker_disabled = True
+    HybridRAGStrategy._colbert_model = None
+    HybridRAGStrategy._colbert_disabled = True
+
+    try:
+        yield StrategyFactory(
+            embedding_service=mock_embedding_service,
+            llm_service=mock_llm_service,
+            vector_store=mock_vector_store,
+            graph_store=mock_graph_store,
+            cache=mock_cache_service,
+        )
+    finally:
+        HybridRAGStrategy._reranker = prev_reranker
+        HybridRAGStrategy._reranker_disabled = prev_reranker_disabled
+        HybridRAGStrategy._colbert_model = prev_colbert
+        HybridRAGStrategy._colbert_disabled = prev_colbert_disabled
 
 
 # ── Tracing ──

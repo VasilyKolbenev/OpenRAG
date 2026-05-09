@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.telemetry")
+logger = logging.getLogger("openrag.telemetry")
 
 
 def setup_telemetry(app: FastAPI) -> None:
@@ -39,7 +39,7 @@ def setup_telemetry(app: FastAPI) -> None:
             from opentelemetry.sdk.trace import TracerProvider
             from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-            resource = Resource.create({"service.name": "serpent-rag"})
+            resource = Resource.create({"service.name": "openrag"})
             provider = TracerProvider(resource=resource)
             exporter = OTLPSpanExporter()
             provider.add_span_processor(BatchSpanProcessor(exporter))

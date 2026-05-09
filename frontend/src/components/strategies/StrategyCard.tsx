@@ -1,5 +1,5 @@
 /**
- * Strategy info card — ported from serpent-rag-ui.jsx.
+ * Strategy info card component.
  * Inline styles → Tailwind + dynamic styles for strategy colors.
  */
 

@@ -1,14 +1,27 @@
 /**
- * API types — mirrors backend Pydantic schemas 1:1.
+ * API types -> mirrors backend Pydantic schemas 1:1.
  */
 
-// ── Enums ──────────────────────────────────────────
+// -- Enums --------------------------------------------------
 
-export type RAGStrategy = 'agentic' | 'corrective' | 'graph' | 'hybrid' | 'memo' | 'naive';
+export type CanonicalRAGStrategy = 'lightrag' | 'agentic' | 'graph';
+export type LegacyRAGStrategy =
+  | 'agentic'
+  | 'corrective'
+  | 'hybrid'
+  | 'memo'
+  | 'naive'
+  | 'wiki';
+export type RAGStrategy = CanonicalRAGStrategy | LegacyRAGStrategy;
 
-export type DocumentStatus = 'pending' | 'processing' | 'indexed' | 'failed' | 'already_exists';
+export type DocumentStatus =
+  | 'pending'
+  | 'processing'
+  | 'indexed'
+  | 'failed'
+  | 'already_exists';
 
-// ── Query ──────────────────────────────────────────
+// -- Query --------------------------------------------------
 
 export interface QueryRequest {
   query: string;
@@ -16,24 +29,20 @@ export interface QueryRequest {
   collection: string;
   top_k: number;
   temperature: number;
-  model: string;
+  model?: string;
   filters?: Record<string, unknown>;
-  // Agentic-specific
-  max_iterations?: number;
-  enable_planning?: boolean;
-  enable_reflection?: boolean;
   // Graph-specific
   max_hops?: number;
   entity_types?: string[];
-  // Hybrid-specific
+  // LightRAG-specific
+  query_mode?: 'local' | 'global' | 'hybrid';
   sparse_weight?: number;
   enable_reranking?: boolean;
   reranker_type?: 'cross-encoder' | 'colbert';
-  // MemoRAG-specific
-  light_model?: string;
-  // CRAG-specific
-  relevance_threshold?: number;
-  web_search_enabled?: boolean;
+  enable_reasoning_bank?: boolean;
+  reasoning_memory_limit?: number;
+  turboquant_enabled?: boolean;
+  turboquant_bits?: number;
   // Sufficient Context Check
   check_sufficiency?: boolean;
   sufficiency_threshold?: number;
@@ -42,7 +51,7 @@ export interface QueryRequest {
   session_id?: string;
 }
 
-// ── Advisor Chatbot ─────────────────────────────────
+// -- Advisor Chatbot ---------------------------------------
 
 export interface AdvisorChatRequest {
   session_id?: string;
@@ -50,7 +59,7 @@ export interface AdvisorChatRequest {
 }
 
 export interface AdvisorRecommendation {
-  recommended: string;
+  recommended: CanonicalRAGStrategy;
   scores: Record<string, number>;
   reasoning: string;
   settings: Record<string, unknown>;
@@ -72,14 +81,14 @@ export interface SourceInfo {
 export interface QueryResponse {
   answer: string;
   sources: SourceInfo[];
-  strategy_used: RAGStrategy;
+  strategy_used: CanonicalRAGStrategy;
   metadata: Record<string, unknown>;
   latency_ms: number;
   trace_id: string;
   session_id?: string;
 }
 
-// ── Chat Sessions ─────────────────────────────────
+// -- Chat Sessions -----------------------------------------
 
 export interface ChatSessionInfo {
   session_id: string;
@@ -91,7 +100,7 @@ export interface SessionListResponse {
   total: number;
 }
 
-// ── SSE Streaming ──────────────────────────────────
+// -- SSE Streaming -----------------------------------------
 
 export interface SSEStatusEvent {
   event: 'status';
@@ -114,25 +123,29 @@ export interface SSEDoneEvent {
     metadata: Record<string, unknown>;
     trace_id: string;
     latency_ms: number;
-    strategy_used: RAGStrategy;
+    strategy_used: CanonicalRAGStrategy;
   };
 }
 
-export type SSEEvent = SSEStatusEvent | SSESourcesEvent | SSETokenEvent | SSEDoneEvent;
+export type SSEEvent =
+  | SSEStatusEvent
+  | SSESourcesEvent
+  | SSETokenEvent
+  | SSEDoneEvent;
 
-// ── Compare ────────────────────────────────────────
+// -- Compare ------------------------------------------------
 
 export interface CompareRequest {
   query: string;
-  strategies: RAGStrategy[];
+  strategies: CanonicalRAGStrategy[];
   collection: string;
   top_k: number;
   temperature: number;
-  model: string;
+  model?: string;
 }
 
 export interface CompareResult {
-  strategy: RAGStrategy;
+  strategy: CanonicalRAGStrategy;
   answer: string;
   sources: SourceInfo[];
   latency_ms: number;
@@ -145,7 +158,7 @@ export interface CompareResponse {
   results: CompareResult[];
 }
 
-// ── Documents ──────────────────────────────────────
+// -- Documents ----------------------------------------------
 
 export interface DocumentResponse {
   id: string;
@@ -186,7 +199,7 @@ export interface CollectionListResponse {
   collections: CollectionInfo[];
 }
 
-// ── Strategy ───────────────────────────────────────
+// -- Strategy -----------------------------------------------
 
 export interface RecommendationRequest {
   domain: string;
@@ -197,25 +210,27 @@ export interface RecommendationRequest {
 }
 
 export interface RecommendationResponse {
-  recommended: RAGStrategy;
+  recommended: CanonicalRAGStrategy;
   scores: Record<string, number>;
   reasoning: string;
 }
 
 export interface StrategyInfo {
-  id: string;
+  id: CanonicalRAGStrategy;
   name: string;
   description: string;
   complexity: number;
   latency: string;
   accuracy: string;
+  available?: boolean;
+  unavailable_reason?: string | null;
 }
 
 export interface StrategyListResponse {
   strategies: StrategyInfo[];
 }
 
-// ── Trace (RAG Debugger) ───────────────────────────
+// -- Trace (RAG Debugger) ----------------------------------
 
 export interface TraceStep {
   name: string;
@@ -238,7 +253,7 @@ export interface PipelineTrace {
   model: string;
 }
 
-// ── Graph Explorer ─────────────────────────────────
+// -- Graph Explorer ----------------------------------------
 
 export interface GraphNode {
   id: string;
@@ -259,7 +274,7 @@ export interface GraphData {
   edges: GraphEdge[];
 }
 
-// ── Quality Dashboard ──────────────────────────────
+// -- Quality Dashboard -------------------------------------
 
 export interface QualityScores {
   faithfulness: number | null;
@@ -276,7 +291,7 @@ export interface QualityMetrics {
   avg_latency_ms: number;
 }
 
-// ── Health ──────────────────────────────────────────
+// -- Health -------------------------------------------------
 
 export interface HealthResponse {
   status: string;

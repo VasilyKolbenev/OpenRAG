@@ -1,5 +1,5 @@
 """
-Alembic async environment configuration for Serpent RAG.
+Alembic async environment configuration for OpenRAG.
 """
 
 import asyncio

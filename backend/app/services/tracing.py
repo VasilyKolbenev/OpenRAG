@@ -10,7 +10,7 @@ from typing import Optional
 
 from app.services.cache import RedisService
 
-logger = logging.getLogger("serpent.tracing")
+logger = logging.getLogger("openrag.tracing")
 
 
 class TraceRecorder:

@@ -5,20 +5,22 @@ Pipeline: Query → [Dense Vector + BM25 Sparse] → RRF Fusion → Cross-Encode
 
 import logging
 import re
-from typing import Optional
 
 from rank_bm25 import BM25Okapi
 
 from app.services.tracing import TraceRecorder
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.hybrid")
+logger = logging.getLogger("openrag.hybrid")
 
 
 class HybridRAGStrategy(BaseRAGStrategy):
     """Combines dense + sparse retrieval with RRF fusion and cross-encoder re-ranking."""
 
     _reranker = None
+    _reranker_disabled = False
+    _colbert_model = None
+    _colbert_disabled = False
 
     async def retrieve(
         self,
@@ -29,6 +31,7 @@ class HybridRAGStrategy(BaseRAGStrategy):
         sparse_weight: float = 0.3,
         enable_reranking: bool = True,
         reranker_type: str = "cross-encoder",
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         fetch_k = top_k * 3  # Over-fetch for fusion
@@ -44,6 +47,7 @@ class HybridRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=fetch_k,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(dense_results)}",
@@ -158,6 +162,9 @@ class HybridRAGStrategy(BaseRAGStrategy):
         self, query: str, candidates: list[dict]
     ) -> list[dict]:
         """Re-rank using cross-encoder model."""
+        if HybridRAGStrategy._reranker_disabled:
+            return candidates
+
         try:
             if HybridRAGStrategy._reranker is None:
                 from sentence_transformers import CrossEncoder
@@ -176,18 +183,28 @@ class HybridRAGStrategy(BaseRAGStrategy):
             return candidates
 
         except ImportError:
+            HybridRAGStrategy._reranker_disabled = True
             logger.warning("CrossEncoder not available, skipping re-ranking")
+            return candidates
+        except Exception as exc:
+            HybridRAGStrategy._reranker_disabled = True
+            logger.warning(
+                "CrossEncoder unavailable, skipping re-ranking: %s",
+                exc,
+            )
             return candidates
 
     async def _colbert_rerank(
         self, query: str, candidates: list[dict]
     ) -> list[dict]:
         """Re-rank using ColBERT late-interaction model via RAGatouille."""
+        if HybridRAGStrategy._colbert_disabled:
+            return await self._cross_encoder_rerank(query, candidates)
+
         try:
             from ragatouille import RAGPretrainedModel
 
-            if not hasattr(HybridRAGStrategy, "_colbert_model") or \
-               HybridRAGStrategy._colbert_model is None:
+            if HybridRAGStrategy._colbert_model is None:
                 HybridRAGStrategy._colbert_model = RAGPretrainedModel.from_pretrained(
                     "colbert-ir/colbertv2.0"
                 )
@@ -206,7 +223,15 @@ class HybridRAGStrategy(BaseRAGStrategy):
             return candidates
 
         except ImportError:
+            HybridRAGStrategy._colbert_disabled = True
             logger.warning(
                 "RAGatouille not available, falling back to cross-encoder"
+            )
+            return await self._cross_encoder_rerank(query, candidates)
+        except Exception as exc:
+            HybridRAGStrategy._colbert_disabled = True
+            logger.warning(
+                "ColBERT reranker unavailable, falling back to cross-encoder: %s",
+                exc,
             )
             return await self._cross_encoder_rerank(query, candidates)

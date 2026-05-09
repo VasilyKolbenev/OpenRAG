@@ -11,6 +11,16 @@ import { generateId } from '@/lib/utils';
 
 type HealthStatus = 'healthy' | 'degraded' | 'offline';
 
+const MAX_CHAT_SESSIONS = 20;
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  strategy: RAGStrategy;
+  createdAt: number;
+}
+
 export interface UploadedFile {
   id: string;
   name: string;
@@ -21,14 +31,29 @@ export interface UploadedFile {
   collection: string;
 }
 
-const WELCOME_MESSAGE = (strategy: RAGStrategy): ChatMessage => ({
-  id: 'welcome',
-  role: 'assistant',
-  content:
-    'Welcome to Serpent RAG \u{1F40D} \u2014 I\'m ready to process your queries using the selected retrieval strategy. Upload documents and ask me anything.',
-  strategy,
-  timestamp: Date.now(),
-});
+const WELCOME_MESSAGE = (strategy: RAGStrategy): ChatMessage => {
+  const isAgentic = strategy === 'agentic';
+  const isGraph =
+    strategy === 'graph' || strategy === 'corrective' || strategy === 'wiki';
+  let content: string;
+  if (isAgentic) {
+    content =
+      'OpenRAG is ready with AgenticRAG. Upload documents and ask multi-step research questions that benefit from planning, tool use, and self-reflection.';
+  } else if (isGraph) {
+    content =
+      'OpenRAG is ready with GraphRAG. Upload documents and ask relationship-heavy questions that need entities, links, and explainable traversal.';
+  } else {
+    content =
+      'OpenRAG is ready with LightRAG. Upload documents and ask questions across PDFs, tables, notes, and mixed knowledge bases.';
+  }
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    content,
+    strategy,
+    timestamp: Date.now(),
+  };
+};
 
 interface AppState {
   // Strategy
@@ -48,9 +73,19 @@ interface AppState {
   setSessionId: (id: string) => void;
   clearSession: () => void;
 
+  // Chat history
+  chatSessions: ChatSession[];
+  activeChatId: string | null;
+  loadChatSession: (id: string) => void;
+  deleteChatSession: (id: string) => void;
+
   // Collection
   activeCollection: string;
   setActiveCollection: (c: string) => void;
+
+  // Document filter (null = search all documents)
+  selectedDocumentFilter: string | null;
+  setSelectedDocumentFilter: (source: string | null) => void;
 
   // Uploads (global, survives page navigation)
   uploads: Record<string, UploadedFile>;
@@ -68,11 +103,11 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // Strategy
-      selectedStrategy: 'hybrid',
+      selectedStrategy: 'lightrag',
       setSelectedStrategy: (s) => set({ selectedStrategy: s }),
 
       // Chat
-      messages: [WELCOME_MESSAGE('hybrid')],
+      messages: [WELCOME_MESSAGE('lightrag')],
 
       addUserMessage: (content, strategy) => {
         const id = generateId();
@@ -136,16 +171,64 @@ export const useAppStore = create<AppState>()(
       sessionId: null,
       setSessionId: (id) => set({ sessionId: id }),
       clearSession: () => {
-        const { selectedStrategy } = get();
+        const { messages, selectedStrategy, chatSessions, activeChatId } = get();
+        const userMessages = messages.filter((m) => m.role === 'user');
+        if (userMessages.length > 0 && !activeChatId) {
+          const title =
+            userMessages[0].content.length > 40
+              ? userMessages[0].content.slice(0, 40) + '...'
+              : userMessages[0].content;
+          const session: ChatSession = {
+            id: generateId(),
+            title,
+            messages: [...messages],
+            strategy: selectedStrategy,
+            createdAt: Date.now(),
+          };
+          const updated = [session, ...chatSessions].slice(0, MAX_CHAT_SESSIONS);
+          set({
+            sessionId: null,
+            activeChatId: null,
+            messages: [WELCOME_MESSAGE(selectedStrategy)],
+            chatSessions: updated,
+          });
+        } else {
+          set({
+            sessionId: null,
+            activeChatId: null,
+            messages: [WELCOME_MESSAGE(selectedStrategy)],
+          });
+        }
+      },
+
+      // Chat history
+      chatSessions: [],
+      activeChatId: null,
+      loadChatSession: (id) => {
+        const { chatSessions } = get();
+        const session = chatSessions.find((s) => s.id === id);
+        if (!session) return;
         set({
+          messages: [...session.messages],
+          selectedStrategy: session.strategy,
+          activeChatId: session.id,
           sessionId: null,
-          messages: [WELCOME_MESSAGE(selectedStrategy)],
         });
+      },
+      deleteChatSession: (id) => {
+        set((s) => ({
+          chatSessions: s.chatSessions.filter((c) => c.id !== id),
+          activeChatId: s.activeChatId === id ? null : s.activeChatId,
+        }));
       },
 
       // Collection
       activeCollection: 'default',
       setActiveCollection: (c) => set({ activeCollection: c }),
+
+      // Document filter
+      selectedDocumentFilter: null,
+      setSelectedDocumentFilter: (source) => set({ selectedDocumentFilter: source }),
 
       // Uploads
       uploads: {},
@@ -182,12 +265,14 @@ export const useAppStore = create<AppState>()(
       setHealthStatus: (s) => set({ healthStatus: s }),
     }),
     {
-      name: 'serpent-app-session',
+      name: 'openrag-app-session',
       // C36: Persist sessionId + recent messages (with size guard)
       partialize: (state) => ({
         sessionId: state.sessionId,
         messages: state.messages.slice(-50), // Keep last 50 messages max
         selectedStrategy: state.selectedStrategy,
+        chatSessions: state.chatSessions.slice(0, MAX_CHAT_SESSIONS),
+        activeChatId: state.activeChatId,
       }),
     },
   ),

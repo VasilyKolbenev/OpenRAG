@@ -2,6 +2,8 @@
 Query request/response schemas.
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from typing import Optional
 
@@ -9,43 +11,38 @@ from pydantic import BaseModel, Field
 
 
 class RAGStrategy(str, Enum):
+    LIGHTRAG = "lightrag"
+    HYBRID = "hybrid"
+    GRAPH = "graph"
     AGENTIC = "agentic"
     CORRECTIVE = "corrective"
-    GRAPH = "graph"
-    HYBRID = "hybrid"
     MEMO = "memo"
     NAIVE = "naive"
+    WIKI = "wiki"
 
 
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=10000)
-    strategy: RAGStrategy = RAGStrategy.HYBRID
+    strategy: RAGStrategy = RAGStrategy.LIGHTRAG
     collection: str = "default"
     top_k: int = Field(default=10, ge=1, le=50)
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
-    model: str = "gpt-4o"
+    model: str = "openai/gpt-5.4"
     filters: Optional[dict] = None
-
-    # Agentic-specific
-    max_iterations: int = Field(default=5, ge=1, le=20)
-    enable_planning: bool = True
-    enable_reflection: bool = True
 
     # Graph-specific
     max_hops: int = Field(default=3, ge=1, le=10)
     entity_types: Optional[list[str]] = None
 
-    # Hybrid-specific
+    # LightRAG-specific
+    query_mode: str = "hybrid"  # local | global | hybrid
     sparse_weight: float = Field(default=0.3, ge=0.0, le=1.0)
     enable_reranking: bool = True
     reranker_type: str = "cross-encoder"  # cross-encoder | colbert
-
-    # MemoRAG-specific
-    light_model: str = "claude-3-haiku-20240307"
-
-    # CRAG-specific
-    relevance_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
-    web_search_enabled: bool = False
+    enable_reasoning_bank: bool = True
+    reasoning_memory_limit: int = Field(default=3, ge=0, le=10)
+    turboquant_enabled: bool = True
+    turboquant_bits: int = Field(default=4, ge=2, le=8)
 
     # Sufficient Context Check
     check_sufficiency: bool = False
@@ -53,7 +50,10 @@ class QueryRequest(BaseModel):
     sufficiency_action: str = "abstain"  # abstain | retry
 
     # Conversation history
-    session_id: Optional[str] = Field(None, description="Chat session ID for conversation context")
+    session_id: Optional[str] = Field(
+        None,
+        description="Chat session ID for conversation context",
+    )
 
 
 class SourceInfo(BaseModel):
@@ -79,13 +79,11 @@ class StreamChunk(BaseModel):
 
 class CompareRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=10000)
-    strategies: list[RAGStrategy] = Field(
-        ..., min_length=2, max_length=4
-    )
+    strategies: list[RAGStrategy] = Field(..., min_length=2, max_length=3)
     collection: str = "default"
     top_k: int = Field(default=10, ge=1, le=50)
     temperature: float = Field(default=0.1, ge=0.0, le=2.0)
-    model: str = "gpt-4o"
+    model: str = "openai/gpt-5.4"
 
 
 class CompareResult(BaseModel):

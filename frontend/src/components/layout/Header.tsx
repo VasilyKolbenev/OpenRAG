@@ -3,7 +3,7 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom';
-import SerpentLogo from './SerpentLogo';
+import OpenRAGLogo from './OpenRAGLogo';
 import { TABS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
 
@@ -16,7 +16,7 @@ export default function Header() {
 
   const healthColor =
     healthStatus === 'healthy'
-      ? 'bg-strategy-hybrid'
+      ? 'bg-strategy-lightrag'
       : healthStatus === 'degraded'
         ? 'bg-yellow-500'
         : 'bg-red-500';
@@ -33,12 +33,12 @@ export default function Header() {
       <div className="max-w-[1400px] mx-auto px-8 py-3 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <SerpentLogo size={30} />
+          <OpenRAGLogo size={30} />
           <div className="flex items-baseline gap-2">
             <span className="text-[16px] font-semibold tracking-tight font-outfit text-serpent-text">
               Serpent
             </span>
-            <span className="text-[9px] px-[7px] py-[2px] bg-gradient-to-br from-strategy-agentic/[0.07] to-strategy-hybrid/[0.07] text-strategy-agentic rounded-[3px] font-medium border border-strategy-agentic/[0.09] font-mono tracking-wider">
+            <span className="text-[9px] px-[7px] py-[2px] bg-gradient-to-br from-strategy-graph/[0.07] to-strategy-lightrag/[0.07] text-strategy-lightrag rounded-[3px] font-medium border border-strategy-lightrag/[0.12] font-mono tracking-wider">
               RAG
             </span>
           </div>

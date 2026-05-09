@@ -10,7 +10,6 @@ Each retrieved document is graded by the LLM for relevance (0-1).
 
 import json
 import logging
-from typing import Optional
 
 import httpx
 
@@ -18,7 +17,7 @@ from app.config import settings
 from app.services.tracing import TraceRecorder
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.corrective")
+logger = logging.getLogger("openrag.corrective")
 
 GRADING_PROMPT = """You are a relevance grader. For each document, score its relevance to the query
 on a scale of 0.0 to 1.0, where 1.0 means perfectly relevant and 0.0 means completely irrelevant.
@@ -53,6 +52,7 @@ class CorrectiveRAGStrategy(BaseRAGStrategy):
         top_k: int = 10,
         relevance_threshold: float = 0.7,
         web_search_enabled: bool = False,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         """CRAG retrieval: retrieve → grade → decide → refine."""
@@ -69,6 +69,7 @@ class CorrectiveRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=top_k * 2,
+            filters=filters,
         )
         trace.end_step(
             output_summary=f"found={len(initial_results)}",
@@ -157,7 +158,7 @@ class CorrectiveRAGStrategy(BaseRAGStrategy):
 
             prompt = GRADING_PROMPT.format(query=query, documents=docs_text)
             raw = await self.llm.structured_extract(
-                prompt=prompt, model="gpt-4o", temperature=0.0
+                prompt=prompt, model="openai/gpt-5.4", temperature=0.0
             )
 
             grades = self._parse_grades(raw, len(batch))

@@ -12,7 +12,7 @@ import litellm
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.llm")
+logger = logging.getLogger("openrag.llm")
 
 # Configure LiteLLM
 litellm.drop_params = True
@@ -48,7 +48,7 @@ class LLMService:
         self,
         query: str,
         history: list[dict],
-        model: str = "gpt-4o-mini",
+        model: str = "openai/gpt-5.4-mini",
     ) -> str:
         """Rewrite ambiguous follow-up query using conversation history.
 
@@ -109,7 +109,7 @@ class LLMService:
         self,
         query: str,
         context: list[dict],
-        model: str = "gpt-4o",
+        model: str = "openai/gpt-5.4",
         temperature: float = 0.1,
         max_tokens: int = 2048,
         system_prompt: Optional[str] = None,
@@ -135,7 +135,7 @@ class LLMService:
         self,
         query: str,
         context: list[dict],
-        model: str = "gpt-4o",
+        model: str = "openai/gpt-5.4",
         temperature: float = 0.1,
         max_tokens: int = 2048,
         system_prompt: Optional[str] = None,
@@ -168,7 +168,7 @@ class LLMService:
     async def structured_extract(
         self,
         prompt: str,
-        model: str = "gpt-4o",
+        model: str = "openai/gpt-5.4",
         temperature: float = 0.0,
     ) -> str:
         """Call LLM for structured extraction (entities, planning, etc.)."""

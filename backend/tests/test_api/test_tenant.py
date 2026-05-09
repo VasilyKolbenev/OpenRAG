@@ -2,12 +2,11 @@
 Tests for multi-tenancy — tenant isolation, middleware, JWT claims.
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
-import pytest
 
 from app.dependencies import AuthService
-from app.middleware.tenant import TenantMiddleware, get_tenant_id
+from app.middleware.tenant import TenantMiddleware
 from app.models.tenant import Tenant
 from app.models.base import TenantMixin
 

@@ -3,15 +3,11 @@ Tests for Corrective RAG (CRAG) strategy — relevance grading + web search fall
 """
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
-from app.services.cache import RedisService
-from app.services.embedding import EmbeddingService
-from app.services.llm import LLMService
 from app.services.tracing import TraceRecorder, TracingService
-from app.services.vector_store import QdrantService, SearchResult
 from app.strategies.corrective import CorrectiveRAGStrategy
 
 
@@ -163,7 +159,7 @@ async def test_web_search_disabled_skips(
     ])
     mock_llm_service.structured_extract.return_value = grades
 
-    results = await crag_strategy.retrieve(
+    await crag_strategy.retrieve(
         query="test",
         collection="default",
         trace=trace,

@@ -1,150 +1,253 @@
-# SerpentRAG API Reference
+# OpenRAG API Reference
 
-Base URL: `http://localhost:8000`
+Base URL: `http://localhost:8000/api`
 
-Interactive docs (development only): `http://localhost:8000/docs`
+Interactive docs: `http://localhost:8000/docs`
+
+## Canonical Engine IDs
+
+Use these ids in new integrations:
+
+- `lightrag`
+- `agentic`
+- `graph`
+
+Legacy ids are still accepted for migration, but responses normalize to the
+canonical ids.
 
 ## Authentication
 
-All endpoints except `/health` require a JWT bearer token:
+Most endpoints require a bearer JWT when auth is enabled in production:
 
+```text
+Authorization: Bearer <jwt-token>
 ```
-Authorization: Bearer <token>
-```
 
-## Endpoints
+In development mode (`ENVIRONMENT=development`) auth is optional and protected
+endpoints accept anonymous requests.
 
-### Health
+To obtain a token in production, use the auth flow exposed by the platform
+(or your external IdP, if integrated). See `docs/DEPLOYMENT.md` for
+configuration details.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Service health check (PostgreSQL, Redis, Qdrant, Neo4j status) |
+## Core Endpoints
 
-### Query
+### `GET /api/health`
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/query` | Execute RAG query with selected strategy |
-| POST | `/query/stream` | SSE streaming RAG query (real-time token output) |
+Returns service health for the runtime dependencies (PostgreSQL, Redis,
+Qdrant, optional Neo4j).
 
-**POST /query** request body:
+### `POST /api/query`
+
+Runs a single query through one engine.
+
+Request example:
+
 ```json
 {
-  "query": "What is retrieval augmented generation?",
-  "strategy": "hybrid",
-  "collection": "my-docs",
-  "model": "gpt-4o",
-  "top_k": 5,
+  "query": "What are the main risks in the renewal clause?",
+  "strategy": "lightrag",
+  "collection": "contracts",
+  "top_k": 10,
   "temperature": 0.1,
-  "check_sufficiency": false
+  "enable_reasoning_bank": true,
+  "reasoning_memory_limit": 3,
+  "turboquant_enabled": true,
+  "turboquant_bits": 4
 }
 ```
 
-**POST /query/stream** — Same body, returns `text/event-stream` (SSE):
-```
-data: {"token": "Retrieval"}
-data: {"token": " augmented"}
-data: {"token": " generation"}
-data: {"done": true, "sources": [...], "trace_id": "abc-123"}
-```
-
-### Compare (A/B Testing)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/compare` | Run query through multiple strategies simultaneously |
-
-**Request body:**
-```json
-{
-  "query": "Explain vector search",
-  "strategies": ["naive", "hybrid", "graph"],
-  "collection": "my-docs"
-}
-```
-
-### Documents
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/documents/upload` | Upload document for processing (PDF, DOCX, TXT, MD) |
-| GET | `/documents` | List all documents |
-| GET | `/documents/{id}` | Get document details |
-| DELETE | `/documents/{id}` | Delete document and its chunks |
-
-### Collections
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/collections` | List all vector collections |
-| POST | `/collections` | Create new collection |
-| DELETE | `/collections/{name}` | Delete collection |
-
-### Strategies
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/strategies` | List available RAG strategies with metadata |
-
-### Pipeline Traces (RAG Debugger)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/traces/{trace_id}` | Get full pipeline trace for debugging |
-| GET | `/traces` | List recent traces |
-
-### Graph Explorer
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/graph/explore` | Get entity-relationship graph data for visualization |
-| GET | `/graph/entities` | Search entities in knowledge graph |
-
-### Quality Metrics
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/metrics/quality` | RAGAS evaluation metrics (context relevance, faithfulness, answer relevance) |
-
-### AI Advisor
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/advisor/chat` | Chat with AI advisor for strategy recommendations |
-
-**Request body:**
-```json
-{
-  "message": "I have technical documentation, ~500 pages",
-  "session_id": "optional-session-id"
-}
-```
-
-## RAG Strategies
-
-| ID | Name | Use Case |
-|----|------|----------|
-| `naive` | Simple RAG | Quick prototyping, small collections |
-| `hybrid` | Hybrid RAG | General purpose, best balance of speed/quality |
-| `graph` | Graph RAG | Entity-rich documents, knowledge bases |
-| `agentic` | Agentic RAG | Complex multi-hop questions |
-| `memo` | MemoRAG | Large collections, recurring query patterns |
-| `corrective` | Corrective RAG | High-stakes queries requiring source validation |
-
-## Error Responses
+Response example:
 
 ```json
 {
-  "detail": "Error description",
-  "status_code": 400
+  "answer": "The main renewal risks are...",
+  "sources": [
+    {
+      "content": "The agreement renews automatically unless...",
+      "score": 0.91,
+      "metadata": {
+        "filename": "master-service-agreement.pdf"
+      }
+    }
+  ],
+  "strategy_used": "lightrag",
+  "metadata": {
+    "model": "openai/gpt-5.4",
+    "top_k": 10,
+    "chunks_retrieved": 6,
+    "query_rewritten": false,
+    "requested_strategy": "lightrag",
+    "optimizers": {
+      "reasoning_bank": true,
+      "turboquant": true,
+      "turboquant_bits": 4
+    }
+  },
+  "latency_ms": 1284,
+  "trace_id": "trace-123",
+  "session_id": "session-456"
 }
 ```
 
-| Code | Meaning |
-|------|---------|
-| 400 | Bad request (invalid parameters) |
-| 401 | Unauthorized (missing/invalid JWT) |
-| 404 | Resource not found |
-| 422 | Validation error (Pydantic) |
-| 500 | Internal server error |
-| 503 | Service unavailable (dependency down) |
+Supported query fields:
+
+| Field | Purpose |
+|---|---|
+| `strategy` | `lightrag`, `agentic`, or `graph` |
+| `max_hops` | Graph traversal depth (GraphRAG) |
+| `entity_types` | Optional graph entity filter (GraphRAG) |
+| `query_mode` | LightRAG retrieval mode (`local` / `global` / `hybrid`) |
+| `sparse_weight` | LightRAG sparse retrieval balance |
+| `enable_reranking` | Enable reranker hook |
+| `enable_reasoning_bank` | Enable retrieval memory recall |
+| `reasoning_memory_limit` | Number of recalled lessons |
+| `turboquant_enabled` | Enable runtime quantization profile |
+| `turboquant_bits` | Target bit-width for the runtime profile |
+
+### `POST /api/query/stream`
+
+Streaming variant of `/api/query`.
+
+Typical event sequence:
+
+```text
+event: status
+data: {"phase":"retrieving"}
+
+event: sources
+data: [...]
+
+event: status
+data: {"phase":"generating"}
+
+event: token
+data: {"text":"..."}
+
+event: done
+data: {"trace_id":"trace-123","latency_ms":1284,"strategy":"lightrag"}
+```
+
+### `POST /api/compare`
+
+Runs the same query through two or three canonical engines.
+
+Request example:
+
+```json
+{
+  "query": "Summarize the obligations and linked entities",
+  "strategies": ["lightrag", "agentic", "graph"],
+  "collection": "contracts",
+  "top_k": 10,
+  "temperature": 0.1
+}
+```
+
+Important:
+
+- the compare schema accepts between **two** and **three** strategies
+- duplicate or legacy ids are canonicalized before execution
+- the response only contains canonical engine ids
+
+Response example:
+
+```json
+{
+  "query": "Summarize the obligations and linked entities",
+  "results": [
+    {
+      "strategy": "lightrag",
+      "answer": "...",
+      "sources": [],
+      "latency_ms": 920,
+      "trace_id": "trace-a"
+    },
+    {
+      "strategy": "agentic",
+      "answer": "...",
+      "sources": [],
+      "latency_ms": 2180,
+      "trace_id": "trace-b"
+    },
+    {
+      "strategy": "graph",
+      "answer": "...",
+      "sources": [],
+      "latency_ms": 1410,
+      "trace_id": "trace-c"
+    }
+  ]
+}
+```
+
+### `GET /api/strategies`
+
+Returns the active product engines:
+
+```json
+{
+  "strategies": [
+    {
+      "id": "lightrag",
+      "name": "LightRAG",
+      "description": "Dual-level retrieval with ReasoningBank guidance and TurboQuant-ready runtime profile",
+      "complexity": 2,
+      "latency": "low-medium",
+      "accuracy": "high"
+    },
+    {
+      "id": "agentic",
+      "name": "AgenticRAG",
+      "description": "Autonomous multi-step planning, tool use, and self-reflection for complex research questions",
+      "complexity": 5,
+      "latency": "medium-high",
+      "accuracy": "very-high"
+    },
+    {
+      "id": "graph",
+      "name": "GraphRAG",
+      "description": "Knowledge-graph traversal with ReasoningBank guidance for relationship-heavy questions",
+      "complexity": 4,
+      "latency": "medium",
+      "accuracy": "high"
+    }
+  ]
+}
+```
+
+### `POST /api/recommend`
+
+Returns a rule-based recommendation across `lightrag`, `agentic`, and `graph`.
+
+### `POST /api/advisor/chat`
+
+Conversational advisor that interviews the user and returns a recommendation
+object with:
+
+- `recommended`
+- `scores` (one entry per canonical engine)
+- `reasoning`
+- `settings`
+
+## Document Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/documents/upload` | Upload a document for processing |
+| `GET` | `/api/documents` | List uploaded documents |
+| `GET` | `/api/documents/{id}` | Fetch document details |
+| `DELETE` | `/api/documents/{id}` | Remove a document and indexed chunks |
+| `GET` | `/api/collections` | List collections |
+
+## Error Model
+
+Validation and runtime errors are returned through FastAPI's standard `detail`
+payload. Typical statuses:
+
+- `400` invalid request
+- `401` unauthorized
+- `404` not found
+- `422` schema validation failed
+- `429` rate limit exceeded
+- `500` internal error

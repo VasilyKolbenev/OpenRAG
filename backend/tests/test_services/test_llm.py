@@ -4,7 +4,6 @@ Tests for LLMService — prompt building, model resolution.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
 from app.services.llm import LLMService
 
@@ -49,8 +48,8 @@ class TestLLMServiceModelResolution:
 
     def test_openai_model_passes_through(self):
         svc = LLMService()
-        assert svc._resolve_model("gpt-4o") == "gpt-4o"
-        assert svc._resolve_model("gpt-4o-mini") == "gpt-4o-mini"
+        assert svc._resolve_model("openai/gpt-5.4") == "openai/gpt-5.4"
+        assert svc._resolve_model("openai/gpt-5.4-mini") == "openai/gpt-5.4-mini"
 
     def test_anthropic_model_gets_prefix(self):
         svc = LLMService()

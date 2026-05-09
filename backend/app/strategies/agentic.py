@@ -5,13 +5,12 @@ Pipeline: Query → Plan → [Search/Retrieve/Calculate]* → Reflect → Answer
 
 import json
 import logging
-from typing import Optional
 
 from app.services.graph_store import Neo4jService
 from app.services.tracing import TraceRecorder
 from app.strategies.base import BaseRAGStrategy
 
-logger = logging.getLogger("serpent.agentic")
+logger = logging.getLogger("openrag.agentic")
 
 
 class AgenticRAGStrategy(BaseRAGStrategy):
@@ -30,6 +29,7 @@ class AgenticRAGStrategy(BaseRAGStrategy):
         max_iterations: int = 5,
         enable_planning: bool = True,
         enable_reflection: bool = True,
+        filters: dict | None = None,
         **kwargs,
     ) -> list[dict]:
         all_context: list[dict] = []
@@ -60,13 +60,13 @@ class AgenticRAGStrategy(BaseRAGStrategy):
 
                 # Execute tool
                 if tool == "vector_search":
-                    results = await self._vector_search_tool(sub_q, collection, top_k)
+                    results = await self._vector_search_tool(sub_q, collection, top_k, filters=filters)
                 elif tool == "graph_search":
                     results = await self._graph_search_tool(sub_q, collection)
                 elif tool == "summarize":
                     results = await self._summarize_tool(sub_q, all_context)
                 else:
-                    results = await self._vector_search_tool(sub_q, collection, top_k)
+                    results = await self._vector_search_tool(sub_q, collection, top_k, filters=filters)
 
                 iteration_results.extend(results)
 
@@ -146,7 +146,7 @@ class AgenticRAGStrategy(BaseRAGStrategy):
         return "vector_search"
 
     async def _vector_search_tool(
-        self, query: str, collection: str, top_k: int
+        self, query: str, collection: str, top_k: int, filters: dict | None = None
     ) -> list[dict]:
         """Execute vector search."""
         query_vector = await self.embedding.embed_query(query)
@@ -154,6 +154,7 @@ class AgenticRAGStrategy(BaseRAGStrategy):
             collection_name=collection,
             query_vector=query_vector,
             limit=top_k,
+            filters=filters,
         )
         return [
             {"content": r.content, "score": r.score, "metadata": r.metadata}

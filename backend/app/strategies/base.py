@@ -12,7 +12,7 @@ from app.services.llm import LLMService
 from app.services.tracing import TraceRecorder
 from app.services.vector_store import QdrantService
 
-logger = logging.getLogger("serpent.base_strategy")
+logger = logging.getLogger("openrag.base_strategy")
 
 SUFFICIENCY_PROMPT = """You are a context evaluator. Given a user query and retrieved context,
 assess whether the context contains sufficient information to answer the query confidently.
@@ -63,7 +63,7 @@ class BaseRAGStrategy(ABC):
         query: str,
         context: list[dict],
         trace: TraceRecorder,
-        model: str = "gpt-4o",
+        model: str = "openai/gpt-5.4",
         temperature: float = 0.1,
         history: Optional[list[dict]] = None,
     ) -> str:
@@ -91,7 +91,7 @@ class BaseRAGStrategy(ABC):
         self,
         query: str,
         context: list[dict],
-        model: str = "gpt-4o",
+        model: str = "openai/gpt-5.4",
         temperature: float = 0.1,
         history: Optional[list[dict]] = None,
     ):
@@ -105,13 +105,25 @@ class BaseRAGStrategy(ABC):
         ):
             yield token
 
+    async def record_outcome(
+        self,
+        query: str,
+        collection: str,
+        trace: TraceRecorder,
+        success: bool,
+        context: list[dict],
+        metadata: Optional[dict] = None,
+    ) -> None:
+        """Optional post-query learning hook."""
+        return None
+
     async def check_context_sufficiency(
         self,
         query: str,
         context: list[dict],
         trace: TraceRecorder,
         threshold: float = 0.5,
-        model: str = "gpt-4o",
+        model: str = "openai/gpt-5.4",
     ) -> tuple[bool, float]:
         """Evaluate whether retrieved context is sufficient to answer the query.
 

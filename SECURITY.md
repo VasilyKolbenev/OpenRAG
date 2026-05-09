@@ -11,7 +11,7 @@
 
 We take security seriously. If you discover a vulnerability, please report it responsibly.
 
-**Contact:** [serpentrag@proton.me](mailto:serpentrag@proton.me)
+**Contact:** [openrag@proton.me](mailto:openrag@proton.me)
 
 **Process:**
 1. Email us with a description of the vulnerability
@@ -58,7 +58,7 @@ We take security seriously. If you discover a vulnerability, please report it re
 
 All production containers enforce defense-in-depth:
 
-- **Non-root users:** `serpent` (backend), `nginx` (frontend) — no container runs as root
+- **Non-root users:** `openrag` (backend), `nginx` (frontend) — no container runs as root
 - **Read-only root filesystem:** `read_only: true` prevents runtime file modification
 - **Privilege escalation prevention:** `security_opt: no-new-privileges:true`
 - **Multi-stage builds:** builder stage discarded, production image contains only runtime
@@ -119,7 +119,7 @@ Push/PR → Lint → SAST → Secrets → Dependencies → Tests → Container S
 - **GOST encryption:** planned for enterprise tier (government sector requirements)
 
 ### Self-Hosted Advantage
-SerpentRAG's self-hosted architecture provides inherent compliance benefits:
+OpenRAG's self-hosted architecture provides inherent compliance benefits:
 - Data never leaves customer infrastructure
 - Air-gapped deployment supported (offline Docker images + local Ollama LLM)
 - Customer controls all encryption keys

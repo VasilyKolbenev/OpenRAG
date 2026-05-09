@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request
 
 from app.schemas.document import CollectionInfo, CollectionListResponse
 
-logger = logging.getLogger("serpent.api.collections")
+logger = logging.getLogger("openrag.api.collections")
 
 router = APIRouter(tags=["collections"])
 

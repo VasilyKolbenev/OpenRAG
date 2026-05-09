@@ -7,17 +7,21 @@ from typing import Optional
 
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import (
+    BinaryQuantization,
+    BinaryQuantizationConfig,
     Distance,
     FieldCondition,
     Filter,
     MatchValue,
     PointStruct,
+    QuantizationSearchParams,
+    SearchParams,
     VectorParams,
 )
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.vector_store")
+logger = logging.getLogger("openrag.vector_store")
 
 
 class SearchResult:
@@ -61,12 +65,19 @@ class QdrantService:
 
         if collection_name not in existing:
             try:
+                quant_config = None
+                if settings.quantization_enabled:
+                    quant_config = BinaryQuantization(
+                        binary=BinaryQuantizationConfig(always_ram=True),
+                    )
+
                 await self._client.create_collection(
                     collection_name=collection_name,
                     vectors_config=VectorParams(
                         size=dimensions,
                         distance=Distance.COSINE,
                     ),
+                    quantization_config=quant_config,
                 )
                 logger.info("Created Qdrant collection", extra={"collection": collection_name})
             except Exception as exc:
@@ -111,12 +122,22 @@ class QdrantService:
             ]
             qdrant_filter = Filter(must=conditions)
 
+        search_params = None
+        if settings.quantization_enabled:
+            search_params = SearchParams(
+                quantization=QuantizationSearchParams(
+                    rescore=True,
+                    oversampling=settings.quantization_oversampling,
+                ),
+            )
+
         results = await self._client.search(
             collection_name=collection_name,
             query_vector=query_vector,
             limit=limit,
             score_threshold=score_threshold,
             query_filter=qdrant_filter,
+            search_params=search_params,
         )
 
         return [

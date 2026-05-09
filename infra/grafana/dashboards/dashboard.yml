@@ -1,9 +1,9 @@
-# Serpent RAG — Grafana Dashboard Provisioning
+# OpenRAG — Grafana Dashboard Provisioning
 
 apiVersion: 1
 
 providers:
-  - name: "Serpent RAG"
+  - name: "OpenRAG"
     orgId: 1
     folder: ""
     type: file

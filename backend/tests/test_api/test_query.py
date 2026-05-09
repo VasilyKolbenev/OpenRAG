@@ -1,22 +1,19 @@
 """
-Tests for query endpoints — POST /query, POST /compare, validation.
+Tests for query endpoints -> POST /query, POST /compare, validation.
 """
 
-from unittest.mock import AsyncMock
-
-import pytest
 from httpx import AsyncClient
 
 
 class TestQueryEndpoint:
-    """POST /query — main RAG query."""
+    """POST /query -> main RAG query."""
 
     async def test_query_returns_answer_and_sources(self, client: AsyncClient):
         response = await client.post(
             "/query",
             json={
                 "query": "What is Python?",
-                "strategy": "naive",
+                "strategy": "lightrag",
                 "collection": "default",
                 "top_k": 5,
             },
@@ -26,26 +23,29 @@ class TestQueryEndpoint:
         assert "answer" in data
         assert "sources" in data
         assert "strategy_used" in data
-        assert data["strategy_used"] == "naive"
+        assert data["strategy_used"] == "lightrag"
         assert "trace_id" in data
         assert "latency_ms" in data
         assert isinstance(data["sources"], list)
 
     async def test_query_with_default_strategy(self, client: AsyncClient):
+        response = await client.post("/query", json={"query": "Hello world"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["strategy_used"] == "lightrag"
+
+    async def test_query_legacy_strategy_alias_canonicalizes(self, client: AsyncClient):
         response = await client.post(
             "/query",
-            json={"query": "Hello world"},
+            json={"query": "Hello world", "strategy": "hybrid"},
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["strategy_used"] == "hybrid"  # default
+        assert data["strategy_used"] == "lightrag"
 
     async def test_query_validation_empty_query(self, client: AsyncClient):
-        response = await client.post(
-            "/query",
-            json={"query": ""},
-        )
-        assert response.status_code == 422  # validation error
+        response = await client.post("/query", json={"query": ""})
+        assert response.status_code == 422
 
     async def test_query_validation_invalid_strategy(self, client: AsyncClient):
         response = await client.post(
@@ -55,22 +55,19 @@ class TestQueryEndpoint:
         assert response.status_code == 422
 
     async def test_query_validation_top_k_out_of_range(self, client: AsyncClient):
-        response = await client.post(
-            "/query",
-            json={"query": "test", "top_k": 100},
-        )
+        response = await client.post("/query", json={"query": "test", "top_k": 100})
         assert response.status_code == 422
 
 
 class TestCompareEndpoint:
-    """POST /compare — A/B comparison."""
+    """POST /compare -> A/B comparison."""
 
     async def test_compare_returns_results(self, client: AsyncClient):
         response = await client.post(
             "/compare",
             json={
                 "query": "What is Python?",
-                "strategies": ["naive", "hybrid"],
+                "strategies": ["lightrag", "graph"],
                 "collection": "default",
             },
         )
@@ -84,19 +81,27 @@ class TestCompareEndpoint:
     async def test_compare_requires_min_two_strategies(self, client: AsyncClient):
         response = await client.post(
             "/compare",
-            json={
-                "query": "test",
-                "strategies": ["naive"],
-            },
+            json={"query": "test", "strategies": ["lightrag"]},
         )
         assert response.status_code == 422
 
-    async def test_compare_max_four_strategies(self, client: AsyncClient):
+    async def test_compare_accepts_up_to_three_strategies(self, client: AsyncClient):
+        # Three canonical engines is now the maximum
         response = await client.post(
             "/compare",
             json={
                 "query": "test",
-                "strategies": ["naive", "hybrid", "graph", "agentic", "naive"],
+                "strategies": ["lightrag", "agentic", "graph"],
+            },
+        )
+        assert response.status_code == 200
+
+    async def test_compare_rejects_more_than_three_strategies(self, client: AsyncClient):
+        response = await client.post(
+            "/compare",
+            json={
+                "query": "test",
+                "strategies": ["lightrag", "graph", "agentic", "hybrid"],
             },
         )
         assert response.status_code == 422

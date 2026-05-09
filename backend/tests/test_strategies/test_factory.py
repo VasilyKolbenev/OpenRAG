@@ -1,5 +1,5 @@
 """
-Tests for StrategyFactory — creation, caching, unknown strategy.
+Tests for StrategyFactory -> creation, caching, unknown strategy.
 """
 
 from unittest.mock import AsyncMock
@@ -8,24 +8,21 @@ import pytest
 
 from app.schemas.query import RAGStrategy
 from app.strategies.agentic import AgenticRAGStrategy
-from app.strategies.corrective import CorrectiveRAGStrategy
 from app.strategies.factory import StrategyFactory
 from app.strategies.graph_rag import GraphRAGStrategy
-from app.strategies.hybrid import HybridRAGStrategy
-from app.strategies.memo_rag import MemoRAGStrategy
-from app.strategies.naive import NaiveRAGStrategy
+from app.strategies.lightrag import LightRAGStrategy
 
 
 class TestStrategyFactory:
-    """StrategyFactory.get() — creates correct types, caches instances."""
+    """StrategyFactory.get() -> creates correct types, caches instances."""
 
-    def test_get_naive_returns_naive_strategy(self, mock_strategy_factory: StrategyFactory):
-        strategy = mock_strategy_factory.get(RAGStrategy.NAIVE)
-        assert isinstance(strategy, NaiveRAGStrategy)
+    def test_get_lightrag_returns_lightrag_strategy(self, mock_strategy_factory: StrategyFactory):
+        strategy = mock_strategy_factory.get(RAGStrategy.LIGHTRAG)
+        assert isinstance(strategy, LightRAGStrategy)
 
-    def test_get_hybrid_returns_hybrid_strategy(self, mock_strategy_factory: StrategyFactory):
+    def test_get_hybrid_alias_returns_lightrag_strategy(self, mock_strategy_factory: StrategyFactory):
         strategy = mock_strategy_factory.get(RAGStrategy.HYBRID)
-        assert isinstance(strategy, HybridRAGStrategy)
+        assert isinstance(strategy, LightRAGStrategy)
 
     def test_get_graph_returns_graph_strategy(self, mock_strategy_factory: StrategyFactory):
         strategy = mock_strategy_factory.get(RAGStrategy.GRAPH)
@@ -35,25 +32,21 @@ class TestStrategyFactory:
         strategy = mock_strategy_factory.get(RAGStrategy.AGENTIC)
         assert isinstance(strategy, AgenticRAGStrategy)
 
-    def test_get_memo_returns_memo_strategy(self, mock_strategy_factory: StrategyFactory):
-        strategy = mock_strategy_factory.get(RAGStrategy.MEMO)
-        assert isinstance(strategy, MemoRAGStrategy)
-
-    def test_get_corrective_returns_corrective_strategy(self, mock_strategy_factory: StrategyFactory):
+    def test_get_corrective_alias_returns_graph_strategy(self, mock_strategy_factory: StrategyFactory):
         strategy = mock_strategy_factory.get(RAGStrategy.CORRECTIVE)
-        assert isinstance(strategy, CorrectiveRAGStrategy)
+        assert isinstance(strategy, GraphRAGStrategy)
 
     def test_get_caches_instances(self, mock_strategy_factory: StrategyFactory):
-        s1 = mock_strategy_factory.get(RAGStrategy.NAIVE)
-        s2 = mock_strategy_factory.get(RAGStrategy.NAIVE)
-        assert s1 is s2
+        first = mock_strategy_factory.get(RAGStrategy.LIGHTRAG)
+        second = mock_strategy_factory.get(RAGStrategy.LIGHTRAG)
+        assert first is second
 
     def test_different_strategies_are_different_instances(
         self, mock_strategy_factory: StrategyFactory
     ):
-        naive = mock_strategy_factory.get(RAGStrategy.NAIVE)
-        hybrid = mock_strategy_factory.get(RAGStrategy.HYBRID)
-        assert naive is not hybrid
+        lightrag = mock_strategy_factory.get(RAGStrategy.LIGHTRAG)
+        graph = mock_strategy_factory.get(RAGStrategy.GRAPH)
+        assert lightrag is not graph
 
     def test_unknown_strategy_raises(
         self,
@@ -71,4 +64,4 @@ class TestStrategyFactory:
             cache=mock_cache_service,
         )
         with pytest.raises(ValueError, match="Unknown strategy"):
-            factory._create("nonexistent")
+            factory.canonicalize("nonexistent")

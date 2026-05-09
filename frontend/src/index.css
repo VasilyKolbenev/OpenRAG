@@ -12,8 +12,8 @@
   }
 
   body {
-    background: #080808;
-    color: #e8e8e8;
+    background: #0f1117;
+    color: #eeeef0;
     font-family: 'DM Sans', -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -26,7 +26,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1e1e1e;
+    background: #252a3a;
     border-radius: 3px;
   }
 

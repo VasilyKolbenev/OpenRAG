@@ -2,9 +2,8 @@
 Tests for EvaluationService — RAGAS fallback, error handling.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 
 from app.services.evaluation import EvaluationService
 

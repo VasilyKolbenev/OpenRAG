@@ -1,10 +1,17 @@
 /**
- * Chat input bar with strategy selector and send button.
+ * Chat input bar with strategy selector, document filter, and send button.
  */
 
-import { useState, useRef, useCallback } from 'react';
-import { STRATEGY_MAP } from '@/lib/constants';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { STRATEGIES, STRATEGY_MAP } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
+import { api } from '@/lib/api';
+import { useStrategyAvailability } from '@/hooks/useStrategyAvailability';
+import type {
+  RAGStrategy,
+  DocumentResponse,
+  CanonicalRAGStrategy,
+} from '@/types/api';
 
 interface ChatInputProps {
   onSend: (query: string) => void;
@@ -13,56 +20,196 @@ interface ChatInputProps {
 
 export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [value, setValue] = useState('');
+  const [showStrategyPicker, setShowStrategyPicker] = useState(false);
+  const [showDocPicker, setShowDocPicker] = useState(false);
+  const [documents, setDocuments] = useState<DocumentResponse[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingRef = useRef(false);
+
   const selectedStrategy = useAppStore((s) => s.selectedStrategy);
+  const setSelectedStrategy = useAppStore((s) => s.setSelectedStrategy);
+  const selectedDocumentFilter = useAppStore((s) => s.selectedDocumentFilter);
+  const setSelectedDocumentFilter = useAppStore((s) => s.setSelectedDocumentFilter);
   const meta = STRATEGY_MAP[selectedStrategy];
+
+  const { isAvailable, unavailableReason } = useStrategyAvailability();
+
+  // If the live API marks the currently selected engine unavailable
+  // (e.g. operator stopped Neo4j) — fall back to lightrag rather than
+  // letting the user fire a request that will fail.
+  const canonicalSelected = selectedStrategy as CanonicalRAGStrategy;
+  useEffect(() => {
+    if (!isAvailable(canonicalSelected)) {
+      setSelectedStrategy('lightrag');
+    }
+  }, [canonicalSelected, isAvailable, setSelectedStrategy]);
+
+  // Fetch documents for the picker
+  useEffect(() => {
+    api.listDocuments().then((res) => {
+      setDocuments(res.documents.filter((d) => d.status === 'indexed'));
+    }).catch(() => {});
+  }, []);
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
-    // B13: Guard against double submit via rapid clicks/Enter
     if (!trimmed || disabled || pendingRef.current) return;
     pendingRef.current = true;
     onSend(trimmed);
     setValue('');
     inputRef.current?.focus();
-    // Reset guard after microtask (allows React to update disabled prop)
     requestAnimationFrame(() => {
       pendingRef.current = false;
     });
   }, [value, disabled, onSend]);
 
+  const docLabel = selectedDocumentFilter
+    ? selectedDocumentFilter.length > 20
+      ? selectedDocumentFilter.slice(0, 18) + '...'
+      : selectedDocumentFilter
+    : 'All docs';
+
   return (
-    <div className="flex gap-[6px] p-2.5 bg-serpent-surface border border-serpent-border border-t-0 rounded-b-[14px]">
-      {/* Strategy badge */}
-      <div
-        className="flex items-center gap-[5px] px-[9px] py-[3px] bg-serpent-bg rounded-[5px] border border-serpent-border text-[10px] font-mono shrink-0"
-        style={{ color: meta?.color }}
-      >
-        {meta?.icon} {meta?.name}
+    <div className="relative">
+      {/* Strategy picker dropdown */}
+      {showStrategyPicker && (
+        <div className="absolute bottom-full left-0 mb-1 w-[260px] bg-serpent-surface border border-serpent-border rounded-lg shadow-xl z-50 py-1">
+          {STRATEGIES.map((s) => {
+            const id = s.id as CanonicalRAGStrategy;
+            const available = isAvailable(id);
+            const reason = unavailableReason(id);
+            return (
+              <button
+                key={s.id}
+                disabled={!available}
+                title={!available ? reason : undefined}
+                onClick={() => {
+                  if (!available) return;
+                  setSelectedStrategy(s.id as RAGStrategy);
+                  setShowStrategyPicker(false);
+                }}
+                className="w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-serpent-surface-hover transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: s.color }}
+                />
+                <span className="text-[12px] text-serpent-text-secondary font-medium">
+                  {s.name}
+                </span>
+                <span className="text-[10px] text-serpent-text-dim ml-auto">
+                  {available ? s.latency : 'offline'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Document picker dropdown */}
+      {showDocPicker && (
+        <div className="absolute bottom-full left-[140px] mb-1 w-[280px] bg-serpent-surface border border-serpent-border rounded-lg shadow-xl z-50 py-1 max-h-[240px] overflow-y-auto">
+          <button
+            onClick={() => {
+              setSelectedDocumentFilter(null);
+              setShowDocPicker(false);
+            }}
+            className={`w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-serpent-surface-hover transition-colors ${
+              !selectedDocumentFilter ? 'bg-serpent-surface-active' : ''
+            }`}
+          >
+            <span className="text-[10px]">{'\uD83D\uDCDA'}</span>
+            <span className="text-[12px] text-serpent-text-secondary font-medium">
+              All documents
+            </span>
+          </button>
+          {documents.map((doc) => (
+            <button
+              key={doc.id}
+              onClick={() => {
+                setSelectedDocumentFilter(doc.filename);
+                setShowDocPicker(false);
+              }}
+              className={`w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-serpent-surface-hover transition-colors ${
+                selectedDocumentFilter === doc.filename ? 'bg-serpent-surface-active' : ''
+              }`}
+            >
+              <span className="text-[10px]">{'\uD83D\uDCC4'}</span>
+              <span className="text-[12px] text-serpent-text-secondary font-medium truncate">
+                {doc.filename}
+              </span>
+              <span className="text-[10px] text-serpent-text-dim ml-auto shrink-0">
+                {doc.chunks} chunks
+              </span>
+            </button>
+          ))}
+          {documents.length === 0 && (
+            <div className="px-3 py-2 text-[11px] text-serpent-text-dim">
+              No indexed documents
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-[6px] p-2.5 bg-serpent-surface border border-serpent-border border-t-0 rounded-b-[14px]">
+        {/* Strategy badge (clickable) */}
+        <button
+          onClick={() => {
+            setShowStrategyPicker(!showStrategyPicker);
+            setShowDocPicker(false);
+          }}
+          className="flex items-center gap-[5px] px-[9px] py-[3px] bg-serpent-bg rounded-[5px] border border-serpent-border text-[10px] font-mono shrink-0 hover:border-serpent-border-hover transition-colors cursor-pointer"
+          style={{ color: meta?.color }}
+          title="Change strategy"
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: meta?.color }}
+          />
+          {meta?.name}
+          <span className="text-[8px] text-serpent-text-dim ml-0.5">{'\u25BC'}</span>
+        </button>
+
+        {/* Document filter badge (clickable) */}
+        <button
+          onClick={() => {
+            setShowDocPicker(!showDocPicker);
+            setShowStrategyPicker(false);
+          }}
+          className={`flex items-center gap-[5px] px-[9px] py-[3px] bg-serpent-bg rounded-[5px] border text-[10px] font-mono shrink-0 hover:border-serpent-border-hover transition-colors cursor-pointer ${
+            selectedDocumentFilter
+              ? 'border-[#38BDF8]/30 text-[#38BDF8]'
+              : 'border-serpent-border text-serpent-text-dim'
+          }`}
+          title="Filter by document"
+        >
+          <span className="text-[9px]">{selectedDocumentFilter ? '\uD83D\uDCC4' : '\uD83D\uDCDA'}</span>
+          {docLabel}
+          <span className="text-[8px] text-serpent-text-dim ml-0.5">{'\u25BC'}</span>
+        </button>
+
+        {/* Input */}
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          placeholder="Ask your documents anything..."
+          disabled={disabled}
+          maxLength={5000}
+          aria-label="Query input"
+          className="flex-1 px-[13px] py-[9px] text-[12.5px] bg-serpent-bg border border-serpent-border rounded-[7px] text-serpent-text-secondary font-dm-sans placeholder:text-serpent-text-dark disabled:opacity-50"
+        />
+
+        {/* Send button */}
+        <button
+          onClick={handleSend}
+          disabled={disabled || !value.trim()}
+          className="px-[18px] py-[9px] text-[11px] bg-[#C8F547] text-[#0f1117] border-none rounded-[7px] font-semibold cursor-pointer font-outfit transition-opacity duration-200 hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Send
+        </button>
       </div>
-
-      {/* Input */}
-      <input
-        ref={inputRef}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-        placeholder="Ask the Serpent anything..."
-        disabled={disabled}
-        maxLength={5000}
-        aria-label="Query input"
-        className="flex-1 px-[13px] py-[9px] text-[12.5px] bg-serpent-bg border border-serpent-border rounded-[7px] text-serpent-text-secondary font-dm-sans placeholder:text-serpent-text-dark disabled:opacity-50"
-      />
-
-      {/* Send button */}
-      <button
-        onClick={handleSend}
-        disabled={disabled || !value.trim()}
-        className="px-[18px] py-[9px] text-[11px] bg-gradient-to-br from-strategy-agentic to-strategy-hybrid text-[#0a0a0a] border-none rounded-[7px] font-semibold cursor-pointer font-outfit transition-opacity duration-200 hover:opacity-85 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        Send
-      </button>
     </div>
   );
 }

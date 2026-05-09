@@ -7,13 +7,11 @@ import type { RAGStrategy, SourceInfo } from './api';
 // ── Navigation ─────────────────────────────────────
 
 export type TabId =
-  | 'strategies'
+  | 'dashboard'
   | 'chat'
   | 'documents'
   | 'debugger'
-  | 'compare'
-  | 'graph'
-  | 'quality';
+  | 'compare';
 
 export interface TabInfo {
   id: TabId;

@@ -1,200 +1,148 @@
-# SerpentRAG
+# OpenRAG Platform
 
-**Universal self-hosted RAG platform with 6 retrieval strategies**
+Self-hosted document intelligence platform built around **three retrieval
+engines**:
 
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![React](https://img.shields.io/badge/react-18-61dafb)
-![License](https://img.shields.io/badge/license-BSL--1.1-orange)
-![Coverage](https://img.shields.io/badge/coverage-80%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-175%20passed-brightgreen)
-![Security](https://img.shields.io/badge/security-hardened-green)
-![Docker](https://img.shields.io/badge/docker-compose-2496ED)
+- **LightRAG** — fast dual-level retrieval for mixed corpora and general Q&A
+- **AgenticRAG** — autonomous multi-step research with planning and reflection
+- **GraphRAG** — knowledge-graph traversal for relationship-heavy reasoning
 
----
+> The product surface is intentionally narrow: three engines, one advisor, one
+> compare flow, one traceable runtime. Legacy strategy ids (`hybrid`, `naive`,
+> `memo`, `corrective`, `wiki`) are still accepted at the API boundary and map
+> back to the canonical engines.
 
-## What is SerpentRAG?
+## Product Positioning
 
-SerpentRAG is a production-ready RAG (Retrieval Augmented Generation) platform that lets you query your documents using 6 different retrieval strategies. Deploy on your own infrastructure, keep your data private, use any LLM provider.
+OpenRAG is a market-ready RAG product, not a strategy catalog. Buyers pick the
+right engine for their workload:
 
-### Key Features
+| Engine | Best for | Core behavior |
+|---|---|---|
+| `lightrag` | Enterprise search, mixed documents, multimodal-ready corpora | Dual-level retrieval with dense + sparse signals |
+| `agentic` | Investigative research, multi-hop questions, audit-style work | Plan → retrieve → reflect → answer |
+| `graph` | Legal, research, compliance, entity-heavy collections | Knowledge-graph traversal with multi-hop evidence |
 
-- **RAG Debugger** — Full pipeline trace visualization (see exactly what happened at each step)
-- **A/B Compare** — Run the same query through multiple strategies side-by-side
-- **Graph Explorer** — Interactive Neo4j knowledge graph visualization
-- **Quality Dashboard** — RAGAS metrics (context relevance, faithfulness, answer relevance)
-- **AI Advisor** — Chatbot that recommends the best strategy for your use case
-- **SSE Streaming** — Real-time token-by-token response streaming
+All three engines share the same platform surface:
 
-## RAG Strategies
+- AI advisor for engine recommendation
+- Side-by-side compare view (up to three engines)
+- Pipeline traces and quality dashboard
+- REST API, web UI, and `openrag` CLI
+- MCP integration for external agent clients
 
-| Strategy | ID | Best For | Latency | Accuracy |
-|----------|-----|----------|---------|----------|
-| **Simple RAG** | `naive` | FAQ, single-doc Q&A, prototyping | Low | Medium |
-| **Hybrid RAG** | `hybrid` | Enterprise search, general-purpose | Low-Medium | High |
-| **Graph RAG** | `graph` | Entity-rich domains (legal, medical, biotech) | Medium | High |
-| **Agentic RAG** | `agentic` | Complex research, multi-hop reasoning | Medium-High | Very High |
-| **MemoRAG** | `memo` | Large collections, recurring query patterns | Medium | High |
-| **Corrective RAG** | `corrective` | High-stakes queries, source validation | Medium | High |
+## Platform Optimizers
 
-## Architecture
+Two optimizer layers sit on top of the engines and apply across all of them:
 
-```
-                         ┌─────────────────┐
-                         │   User Browser   │
-                         └────────┬─────────┘
-                                  │ HTTPS
-                    ┌─────────────▼──────────────┐
-                    │   Frontend (React + Nginx)  │
-                    │        :3000                │
-                    └─────────────┬───────────────┘
-                                  │ /api/*
-                    ┌─────────────▼───────────────┐
-                    │   API Server (FastAPI)       │
-                    │   6 RAG Strategies + SSE     │
-                    │        :8000                 │
-                    └──┬──────┬──────┬──────┬─────┘
-                       │      │      │      │
-              ┌────────▼┐ ┌──▼───┐ ┌▼─────┐ ┌▼──────┐
-              │PostgreSQL│ │Redis │ │Qdrant│ │ Neo4j │
-              │ pgvector │ │Cache │ │Vector│ │ Graph │
-              │  :5432   │ │:6379 │ │:6333 │ │ :7687 │
-              └──────────┘ └──┬───┘ └──────┘ └───────┘
-                              │
-                    ┌─────────▼───────────────┐
-                    │   Celery Worker          │
-                    │   Document Processing    │
-                    └─────────────────────────┘
-```
+| Optimizer | What it does in the current product |
+|---|---|
+| ReasoningBank-style memory | Stores retrieval lessons from prior runs and recalls them during later queries |
+| TurboQuant controls | Exposes runtime quantization-style tuning knobs so deployments can balance latency and cost |
 
-> C4 architecture diagrams (PlantUML): [`docs/architecture/`](docs/architecture/)
+Optimizers are productized as engine controls, not as separate strategies.
+
+## Why This Shape
+
+OpenRAG used to ship many retrieval modes at once, which made the product
+harder to explain, compare, and sell. The current direction simplifies the
+message:
+
+- default to `LightRAG` for most collections
+- promote `AgenticRAG` when one question hides several sub-questions
+- promote `GraphRAG` when relationships and explainability matter
+- keep legacy strategy ids working through canonical alias mapping
+
+Legacy ids accepted by the backend:
+
+- `hybrid`, `naive`, `memo`, `wiki` → `lightrag`
+- `corrective` → `graph`
+- `agentic` is now its own canonical engine
+
+The UI and API responses always normalize back to the canonical engine ids.
+
+## Key Features
+
+- Three-engine advisor that recommends `lightrag`, `agentic`, or `graph`
+- Compare workflow that runs the same query against two or three engines
+- Trace debugger for every query
+- Document ingestion pipeline for PDFs, DOCX, TXT, MD, CSV, and JSON
+- Optional Neo4j-backed graph mode
+- MCP, CLI, and REST access paths
+- Self-hosted deployment with full data sovereignty
 
 ## Quick Start
 
 ```bash
-# 1. Clone
-git clone https://github.com/VasilyKolbenev/SerpentRAG.git
-cd SerpentRAG
-
-# 2. Configure
+git clone <repo-url>
+cd serpent-rag-platform
 cp .env.example .env
-# Edit .env: add your OPENAI_API_KEY and/or ANTHROPIC_API_KEY
-
-# 3. Launch
+# set at least one model provider key (OPENAI_API_KEY or ANTHROPIC_API_KEY)
 docker compose up -d
-
-# 4. Verify
-curl http://localhost:8000/health
-# Open http://localhost:3000 in browser
 ```
 
-**Requirements:** Docker Engine 24+ with Docker Compose v2
+Then open:
 
-## Tech Stack
+- UI: `http://localhost:3000`
+- API docs: `http://localhost:8000/docs`
+- Health: `http://localhost:8000/api/health`
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18, TypeScript, Tailwind CSS, Zustand, Vite |
-| **Backend** | FastAPI, Uvicorn, Python 3.12, Pydantic v2 |
-| **LLM** | LiteLLM (OpenAI, Anthropic, Ollama) |
-| **Embeddings** | sentence-transformers (all-MiniLM-L6-v2, 384-dim, local) |
-| **Vector Store** | Qdrant v1.11 |
-| **Graph Store** | Neo4j 5.22 Community (optional) |
-| **Database** | PostgreSQL 16 + pgvector |
-| **Cache/Queue** | Redis 7 + Celery 5.4 |
-| **Observability** | structlog, OpenTelemetry, Prometheus, Grafana |
-| **Infrastructure** | Docker Compose, Traefik (production), Alembic migrations |
+## Query Examples
 
-## Project Structure
-
-```
-serpent-rag-platform/
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/          # 9 API routers
-│   │   ├── services/        # 8 core services
-│   │   ├── strategies/      # 6 RAG strategies + factory
-│   │   ├── models/          # SQLAlchemy models
-│   │   ├── schemas/         # Pydantic schemas
-│   │   ├── middleware/       # Logging, telemetry, tenant
-│   │   ├── workers/         # Celery tasks
-│   │   ├── main.py          # App factory
-│   │   └── config.py        # Settings (pydantic-settings)
-│   ├── tests/               # 175 tests, 80%+ coverage
-│   ├── alembic/             # Database migrations
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # 25+ React components
-│   │   ├── pages/           # 6 pages
-│   │   ├── stores/          # Zustand stores
-│   │   ├── hooks/           # SSE streaming hook
-│   │   └── lib/             # API client, utils
-│   ├── package.json
-│   └── Dockerfile
-├── infra/                   # Prometheus, Grafana, OTel configs
-├── docs/
-│   ├── architecture/        # C4 PlantUML diagrams
-│   ├── API.md               # API reference
-│   └── ROADMAP.md           # Commercialization roadmap
-├── docker-compose.yml       # Development (7 services)
-├── docker-compose.prod.yml  # Production (+ Traefik, monitoring)
-└── .env.example             # Environment template
-```
-
-## API Endpoints
-
-| Group | Endpoint | Description |
-|-------|----------|-------------|
-| Health | `GET /health` | Service health (PostgreSQL, Redis, Qdrant, Neo4j) |
-| Query | `POST /query` | RAG query with selected strategy |
-| Streaming | `POST /query/stream` | SSE streaming response |
-| Compare | `POST /compare` | A/B test multiple strategies |
-| Documents | `POST /documents/upload` | Upload PDF, DOCX, TXT, MD |
-| Collections | `GET /collections` | Manage vector collections |
-| Strategies | `GET /strategies` | List available strategies |
-| Traces | `GET /traces/{id}` | Pipeline trace (RAG Debugger) |
-| Graph | `GET /graph/explore` | Knowledge graph data |
-| Metrics | `GET /metrics/quality` | RAGAS quality metrics |
-| Advisor | `POST /advisor/chat` | AI strategy recommendation |
-
-Full API reference: [`docs/API.md`](docs/API.md)
-
-## Development
+Use the canonical engine ids in new integrations:
 
 ```bash
-# Backend
-cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-pytest tests/ -v --cov=app
-
-# Frontend
-cd frontend
-npm ci
-npm run dev
+openrag query "Summarize the main risks" -s lightrag
+openrag query "Walk through every counterparty obligation" -s agentic
+openrag query "Show related entities and obligations" -s graph
+openrag compare "What are the main findings?" -s lightrag -s agentic -s graph
 ```
 
-## Security
+Sample API request:
 
-SerpentRAG is built with security as a first-class concern. 11 security layers are implemented out of the box:
+```json
+{
+  "query": "What changed in the contract renewal clause?",
+  "strategy": "lightrag",
+  "collection": "contracts",
+  "top_k": 10,
+  "enable_reasoning_bank": true,
+  "turboquant_enabled": true,
+  "turboquant_bits": 4
+}
+```
 
-- **Authentication:** JWT with expiration, unique token IDs, role claims
-- **Encryption in transit:** TLS 1.2+ via Traefik + Let's Encrypt
-- **Container hardening:** non-root users, read-only filesystem, no-new-privileges
-- **DevSecOps CI/CD:** Bandit, Semgrep, Gitleaks, Trivy, pip-audit, SBOM generation
-- **Input validation:** Pydantic v2 schemas with strict bounds, file upload whitelist
-- **Network isolation:** internal/public Docker network separation
-- **Security headers:** CSP, HSTS, X-Frame-Options, Permissions-Policy
+## Operational Notes
 
-See [SECURITY.md](SECURITY.md) for full security policy, vulnerability reporting, and compliance roadmap.
+- `GraphRAG` depends on Neo4j. If Neo4j is unavailable, fall back to `LightRAG`
+  or `AgenticRAG`.
+- The compare endpoint accepts two or three canonical engines per request.
+- The strategy list endpoint returns `LightRAG`, `AgenticRAG`, and `GraphRAG`.
+
+## Repository Map
+
+| Path | Purpose |
+|---|---|
+| `backend/app` | Active FastAPI backend, schemas, services, and engine strategies |
+| `frontend/src` | Active React UI |
+| `backend/tests` | API and strategy test coverage for the active backend |
+| `openrag` | Legacy package and CLI compatibility surface |
+| `docs` | Product, architecture, and integration docs |
+
+## Documentation
+
+- **[Customer Deployment Runbook](docs/CUSTOMER_DEPLOYMENT.md)** — full
+  step-by-step guide for installing OpenRAG in a customer environment
+  (server prep, secrets, TLS, smoke tests, backups, troubleshooting,
+  acceptance checklist). Start here for production deployments.
+- [Getting Started](docs/GETTING_STARTED.md) — local dev quickstart
+- [Architecture](docs/ARCHITECTURE.md)
+- [API Reference](docs/API.md)
+- [CLI Reference](docs/CLI.md)
+- [Deployment](docs/DEPLOYMENT.md) — operator-level reference
+- [Investor Demo Runbook](docs/INVESTOR_DEMO_RUNBOOK.md)
+- [Production Readiness Backlog](docs/PROD_READINESS_BACKLOG.md)
 
 ## License
 
-**Business Source License 1.1 (BSL)**
-
-- Source code is available for reading, modification, and non-production use
-- Production use requires a commercial license
-- Converts to Apache 2.0 on 2030-02-20
-
-See [LICENSE](LICENSE) for details. For commercial licensing: serpentrag@proton.me
+Apache License 2.0. See [LICENSE](LICENSE).

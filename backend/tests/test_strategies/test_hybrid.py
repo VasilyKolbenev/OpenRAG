@@ -88,7 +88,7 @@ class TestHybridRetrieve:
                 {"content": "chunk", "score": 0.9, "metadata": {}, "rerank_score": 0.95}
             ],
         ):
-            results = await strategy.retrieve(
+            await strategy.retrieve(
                 query="Python frameworks",
                 collection="default",
                 trace=trace,
@@ -116,7 +116,7 @@ class TestHybridRetrieve:
         )
         trace = TraceRecorder(query="q", strategy="hybrid", collection="c")
 
-        results = await strategy.retrieve(
+        await strategy.retrieve(
             query="test",
             collection="default",
             trace=trace,
@@ -164,7 +164,7 @@ class TestHybridRetrieve:
                 {"content": "chunk", "score": 0.9, "metadata": {}, "rerank_score": 0.8}
             ],
         ) as mock_colbert:
-            results = await strategy.retrieve(
+            await strategy.retrieve(
                 query="test",
                 collection="default",
                 trace=trace,

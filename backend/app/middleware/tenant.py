@@ -12,7 +12,7 @@ from starlette.responses import Response
 
 from app.config import settings
 
-logger = logging.getLogger("serpent.tenant")
+logger = logging.getLogger("openrag.tenant")
 
 
 class TenantMiddleware(BaseHTTPMiddleware):

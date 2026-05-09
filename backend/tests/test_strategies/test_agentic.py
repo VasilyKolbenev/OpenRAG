@@ -4,7 +4,6 @@ Tests for AgenticRAGStrategy — plan, tool selection, reflect loop.
 
 from unittest.mock import AsyncMock
 
-from app.services.graph_store import GraphNode
 from app.services.tracing import TraceRecorder
 from app.strategies.agentic import AgenticRAGStrategy
 
@@ -163,7 +162,7 @@ class TestAgenticRetrieve:
         )
         trace = TraceRecorder(query="q", strategy="agentic", collection="c")
 
-        results = await strategy.retrieve(
+        await strategy.retrieve(
             query="Simple question",
             collection="default",
             trace=trace,
@@ -194,7 +193,7 @@ class TestAgenticRetrieve:
         )
         trace = TraceRecorder(query="q", strategy="agentic", collection="c")
 
-        results = await strategy.retrieve(
+        await strategy.retrieve(
             query="Hard question",
             collection="default",
             trace=trace,

@@ -1,9 +1,9 @@
 """
-SERPENT RAG PLATFORM — Configuration
+OpenRAG — Configuration
 Uses pydantic-settings for type-safe environment variable loading.
 """
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,6 +12,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     @model_validator(mode="after")
@@ -21,6 +22,14 @@ class Settings(BaseSettings):
             if self.jwt_secret == "change-me-in-production" or len(self.jwt_secret) < 32:
                 raise ValueError(
                     "JWT_SECRET must be set to a strong secret (>= 32 chars) in production"
+                )
+            if not self.encryption_key or len(self.encryption_key) < 32:
+                raise ValueError(
+                    "ENCRYPTION_KEY must be set to a strong secret (>= 32 chars) in production"
+                )
+            if not self.admin_password or len(self.admin_password) < 12:
+                raise ValueError(
+                    "OPENRAG_ADMIN_PASSWORD must be set (>= 12 chars) to enable the auth flow in production"
                 )
         return self
 
@@ -46,6 +55,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_hours: int = 24
+    encryption_key: str = ""
+    # OPENRAG_ADMIN_PASSWORD enables the built-in password -> JWT flow.
+    # In production this is required; in development it stays empty so unauthenticated requests work.
+    admin_password: str = Field(default="", validation_alias="OPENRAG_ADMIN_PASSWORD")
 
     # Application
     environment: str = "development"
@@ -60,6 +73,12 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-m3"
     embedding_dimensions: int = 1024
 
+    # Quantization (Engine)
+    quantization_enabled: bool = False
+    quantization_oversampling: float = 2.0
+    turboquant_enabled: bool = True
+    turboquant_default_bits: int = 4
+
     # Web Search (CRAG)
     web_search_api_key: str = ""
     web_search_provider: str = "tavily"  # tavily | serpapi
@@ -67,12 +86,14 @@ class Settings(BaseSettings):
     # RAG Defaults (C19: extracted magic numbers)
     default_top_k: int = 10
     default_temperature: float = 0.1
-    default_model: str = "gpt-4o"
-    advisor_model: str = "anthropic/claude-3-haiku-20240307"
+    default_model: str = "openai/gpt-5.4"
+    advisor_model: str = "openai/gpt-5.4-mini"
     sufficiency_threshold: float = 0.7
     relevance_threshold: float = 0.7
     max_chat_history_messages: int = 20
     memo_memory_ttl: int = 86400  # 24h
+    reasoning_bank_ttl: int = 604800  # 7d
+    reasoning_bank_max_entries: int = 96
     advisor_session_ttl: int = 3600  # 1h
     chat_session_ttl: int = 14400  # 4h
 

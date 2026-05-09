@@ -1,12 +1,11 @@
 /**
- * AI Advisor Chatbot — floating widget (like Intercom).
- * Conversational AI that guides users to the best RAG strategy.
+ * Floating advisor chatbot.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { STRATEGY_COLORS, STRATEGY_MAP } from '@/lib/constants';
 import { useAdvisorStore } from '@/stores/advisorStore';
-import { STRATEGY_COLORS } from '@/lib/constants';
-import type { RAGStrategy, AdvisorRecommendation } from '@/types/api';
+import type { AdvisorRecommendation, RAGStrategy } from '@/types/api';
 
 export function AdvisorChatbot() {
   const {
@@ -23,7 +22,6 @@ export function AdvisorChatbot() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
@@ -35,116 +33,106 @@ export function AdvisorChatbot() {
     await sendMessage(text);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void handleSend();
     }
   };
 
   return (
     <>
-      {/* Floating trigger button */}
       <button
         onClick={toggleOpen}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#C8F547] to-[#2DD4A8] shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#C8F547] to-[#2DD4A8] shadow-lg transition-all duration-300 hover:shadow-xl"
         aria-label="Open AI Advisor"
       >
-        <span className="text-2xl group-hover:scale-110 transition-transform">
-          {isOpen ? '\u2715' : '\uD83D\uDC0D'}
+        <span className="text-2xl transition-transform group-hover:scale-110">
+          {isOpen ? '\u2715' : '\u2728'}
         </span>
         {!isOpen && messages.length === 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+          <span className="absolute -right-1 -top-1 h-4 w-4 animate-pulse rounded-full bg-red-500" />
         )}
       </button>
 
-      {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[400px] h-[500px] bg-[#1A1B23] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-3 bg-gradient-to-r from-[#C8F547]/10 to-[#2DD4A8]/10 border-b border-white/10 flex items-center justify-between">
+        <div className="fixed bottom-24 right-6 z-50 flex h-[500px] w-[90vw] flex-col overflow-hidden rounded-2xl border border-[#252a3a] bg-[#161922] shadow-2xl md:w-[400px]">
+          <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#C8F547]/10 to-[#2DD4A8]/10 px-4 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl">{'\uD83D\uDC0D'}</span>
+              <span className="text-xl">{'\u2728'}</span>
               <div>
-                <h3 className="text-sm font-semibold text-white">Serpent Advisor</h3>
-                <p className="text-xs text-white/50">AI Strategy Consultant</p>
+                <h3 className="text-sm font-semibold text-white">OpenRAG AI</h3>
+                <p className="text-xs text-white/50">LightRAG / AgenticRAG / GraphRAG Advisor</p>
               </div>
             </div>
             <button
               onClick={reset}
-              className="text-xs text-white/40 hover:text-white/70 transition-colors px-2 py-1 rounded"
+              className="rounded px-2 py-1 text-xs text-white/40 transition-colors hover:text-white/70"
               title="Start new conversation"
             >
               Reset
             </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {messages.length === 0 && (
-              <div className="text-center text-white/40 text-sm mt-8">
-                <p className="text-2xl mb-2">{'\uD83D\uDC0D'}</p>
-                <p>Hi! I&apos;m Serpent, your AI advisor.</p>
-                <p className="mt-1">Tell me about your use case and</p>
-                <p>I&apos;ll recommend the best RAG strategy.</p>
+              <div className="mt-8 text-center text-sm text-white/40">
+                <p className="mb-2 text-2xl">{'\u2728'}</p>
+                <p>Describe your documents and users.</p>
+                <p className="mt-1">I&apos;ll choose between LightRAG</p>
+                <p>and GraphRAG for the best fit.</p>
               </div>
             )}
 
-            {messages.map((msg) => (
+            {messages.map((message) => (
               <div
-                key={msg.id}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                key={message.id}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed ${
-                    msg.role === 'user'
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+                    message.role === 'user'
                       ? 'bg-[#C8F547]/20 text-white'
                       : 'bg-white/5 text-white/90'
                   }`}
                 >
-                  <MessageContent content={msg.content} />
+                  <MessageContent content={message.content} />
                 </div>
               </div>
             ))}
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white/5 px-3 py-2 rounded-xl">
-                  <span className="text-white/50 text-sm animate-pulse">
+                <div className="rounded-xl bg-white/5 px-3 py-2">
+                  <span className="text-sm text-white/50 animate-pulse">
                     Thinking...
                   </span>
                 </div>
               </div>
             )}
 
-            {error && (
-              <div className="text-red-400 text-xs text-center">{error}</div>
-            )}
+            {error && <div className="text-center text-xs text-red-400">{error}</div>}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Recommendation card */}
-          {recommendation && (
-            <RecommendationCard recommendation={recommendation} />
-          )}
+          {recommendation && <RecommendationCard recommendation={recommendation} />}
 
-          {/* Input */}
-          <div className="px-4 py-3 border-t border-white/10">
+          <div className="border-t border-white/10 px-4 py-3">
             <div className="flex gap-2">
               <input
                 type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Describe your use case..."
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C8F547]/50"
+                className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C8F547]/50"
                 disabled={isLoading}
               />
               <button
-                onClick={handleSend}
+                onClick={() => void handleSend()}
                 disabled={isLoading || !input.trim()}
-                className="px-4 py-2 bg-[#C8F547] text-black rounded-lg text-sm font-medium hover:bg-[#C8F547]/90 disabled:opacity-30 transition-all"
+                className="rounded-lg bg-[#C8F547] px-4 py-2 text-sm font-medium text-black transition-all hover:bg-[#C8F547]/90 disabled:opacity-30"
               >
                 Send
               </button>
@@ -156,27 +144,25 @@ export function AdvisorChatbot() {
   );
 }
 
-/** Renders message content with basic markdown-like formatting. */
 function MessageContent({ content }: { content: string }) {
-  // Simple bold rendering
   const parts = content.split(/(\*\*.*?\*\*)/g);
+
   return (
     <>
-      {parts.map((part, i) => {
+      {parts.map((part, index) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong key={i} className="font-semibold text-[#C8F547]">
+            <strong key={index} className="font-semibold text-[#C8F547]">
               {part.slice(2, -2)}
             </strong>
           );
         }
-        return <span key={i}>{part}</span>;
+        return <span key={index}>{part}</span>;
       })}
     </>
   );
 }
 
-/** Recommendation card shown when advisor makes a recommendation. */
 function RecommendationCard({
   recommendation,
 }: {
@@ -184,34 +170,34 @@ function RecommendationCard({
 }) {
   const color =
     STRATEGY_COLORS[recommendation.recommended as RAGStrategy] ?? '#C8F547';
+  const recommendedMeta =
+    STRATEGY_MAP[recommendation.recommended as RAGStrategy];
 
   return (
-    <div className="mx-4 mb-2 p-3 rounded-xl bg-gradient-to-r from-white/5 to-white/[0.02] border border-white/10">
-      <div className="flex items-center gap-2 mb-1">
+    <div className="mx-4 mb-2 rounded-xl border border-white/10 bg-gradient-to-r from-white/5 to-white/[0.02] p-3">
+      <div className="mb-1 flex items-center gap-2">
         <span className="text-xs text-white/50">Recommended:</span>
-        <span
-          className="text-sm font-bold uppercase"
-          style={{ color }}
-        >
-          {recommendation.recommended}
+        <span className="text-sm font-bold uppercase" style={{ color }}>
+          {recommendedMeta?.name ?? recommendation.recommended}
         </span>
       </div>
       {recommendation.reasoning && (
-        <p className="text-xs text-white/60 leading-relaxed">
+        <p className="text-xs leading-relaxed text-white/60">
           {recommendation.reasoning}
         </p>
       )}
       {Object.keys(recommendation.scores).length > 0 && (
-        <div className="flex gap-1 mt-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-1">
           {Object.entries(recommendation.scores)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 4)
+            .sort(([, left], [, right]) => right - left)
+            .slice(0, 2)
             .map(([name, score]) => (
               <span
                 key={name}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/50"
+                className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-white/50"
               >
-                {name}: {(score * 100).toFixed(0)}%
+                {STRATEGY_MAP[name as RAGStrategy]?.name ?? name}:{' '}
+                {(score * 100).toFixed(0)}%
               </span>
             ))}
         </div>

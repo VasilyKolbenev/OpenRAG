@@ -4,18 +4,16 @@ Document processing service — parse, chunk, embed, store, extract entities.
 
 import json
 import logging
-import os
 import uuid
 from pathlib import Path
 from typing import Callable, Optional
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.config import settings
 from app.services.embedding import EmbeddingService
 from app.services.vector_store import QdrantService
 
-logger = logging.getLogger("serpent.document_processor")
+logger = logging.getLogger("openrag.document_processor")
 
 _ENTITY_EXTRACTION_PROMPT = """Extract named entities and relationships from the following text.
 Return a JSON object with two arrays:
@@ -36,7 +34,7 @@ Text:
 Response (JSON only):"""
 
 _ENTITY_BATCH_SIZE = 5
-_ENTITY_EXTRACTION_MODEL = "gpt-4o-mini"
+_ENTITY_EXTRACTION_MODEL = "openai/gpt-5.4-mini"
 
 
 class DocumentProcessorService:
