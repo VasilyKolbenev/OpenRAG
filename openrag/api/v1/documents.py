@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Optional
 
 import aiofiles
-from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 
 from openrag.config import settings
 from openrag.schemas.document import (
@@ -40,7 +40,7 @@ ALLOWED_TYPES = {
 async def upload_document(
     req: Request,
     file: UploadFile = File(...),
-    collection: str = "default",
+    collection: str = Form("default"),
 ):
     """Upload and index a document."""
     # Validate file type
