@@ -131,11 +131,15 @@ Sample API request:
 
 ## Documentation
 
-- [Getting Started](docs/GETTING_STARTED.md)
+- **[Customer Deployment Runbook](docs/CUSTOMER_DEPLOYMENT.md)** — full
+  step-by-step guide for installing OpenRAG in a customer environment
+  (server prep, secrets, TLS, smoke tests, backups, troubleshooting,
+  acceptance checklist). Start here for production deployments.
+- [Getting Started](docs/GETTING_STARTED.md) — local dev quickstart
 - [Architecture](docs/ARCHITECTURE.md)
 - [API Reference](docs/API.md)
 - [CLI Reference](docs/CLI.md)
-- [Deployment](docs/DEPLOYMENT.md)
+- [Deployment](docs/DEPLOYMENT.md) — operator-level reference
 - [Investor Demo Runbook](docs/INVESTOR_DEMO_RUNBOOK.md)
 - [Production Readiness Backlog](docs/PROD_READINESS_BACKLOG.md)
 
